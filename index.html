@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PDF Studio</title>
+
+<script type="importmap">
+{
+  "imports": {
+    "pdfjs-dist": "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs",
+    "pdfjs-dist/": "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/"
+  }
+}
+</script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+<style>
+:root{
+  --bg:#313338; --bg-2:#2b2d31; --bg-3:#1e1f22;
+  --text:#dbdee1; --muted:#949ba4;
+  --brand:#5865f2; --brand-2:#4752c4;
+  --green:#23a55a; --danger:#ed4245; --yellow:#facc15;
+  --font:"gg sans","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{background:var(--bg-3);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow:hidden;}
+
+/* ================= ONBOARDING =================omg mük ingiliş */
+#onboarding{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1200px 700px at 50% -10%, #5865f23a, transparent 60%),
+             radial-gradient(900px 500px at 80% 110%, #eb459e22, transparent 60%), var(--bg-3);
+  perspective:1400px;overflow:hidden;transition:opacity .5s ease, visibility .5s;}
+#onboarding.hide{opacity:0;visibility:hidden;pointer-events:none;}
+.floaties{position:absolute;inset:0;pointer-events:none;transform-style:preserve-3d;}
+.floaty{position:absolute;border-radius:18px;background:linear-gradient(135deg,#5865f2,#eb459e);opacity:.18;filter:blur(2px);animation:floaty 12s ease-in-out infinite;box-shadow:0 0 60px #5865f255;}
+.floaty:nth-child(1){width:120px;height:120px;top:12%;left:8%;transform:rotateX(20deg) rotateY(-15deg);}
+.floaty:nth-child(2){width:80px;height:80px;bottom:14%;left:16%;animation-delay:-3s;background:linear-gradient(135deg,#23a55a,#5865f2);}
+.floaty:nth-child(3){width:150px;height:150px;top:18%;right:9%;animation-delay:-6s;background:linear-gradient(135deg,#eb459e,#5865f2);}
+.floaty:nth-child(4){width:60px;height:60px;bottom:20%;right:18%;animation-delay:-9s;background:linear-gradient(135deg,#faa61a,#ed4245);}
+@keyframes floaty{0%,100%{transform:translateY(0) rotateX(20deg) rotateY(-15deg);}50%{transform:translateY(-30px) rotateX(-10deg) rotateY(15deg);}}
+.card3d{position:relative;width:min(560px,92vw);transform-style:preserve-3d;transform:rotateX(6deg) rotateY(-6deg);transition:transform .4s ease;animation:cardIn .8s cubic-bezier(.2,.9,.3,1.2);}
+@keyframes cardIn{from{transform:rotateX(30deg) rotateY(-20deg) translateZ(-200px);opacity:0;}to{transform:rotateX(6deg) rotateY(-6deg) translateZ(0);opacity:1;}}
+.card3d:hover{transform:rotateX(3deg) rotateY(-3deg);}
+.card-inner{position:relative;background:linear-gradient(160deg,#2b2d31,#232428);border:1px solid #ffffff14;border-radius:24px;padding:48px 40px 40px;text-align:center;box-shadow:0 40px 80px #000000aa,0 0 0 1px #ffffff08 inset,0 1px 0 #ffffff10 inset;transform-style:preserve-3d;}
+.card-inner::before{content:"";position:absolute;left:10%;right:10%;top:0;height:2px;background:linear-gradient(90deg,transparent,#5865f2,#eb459e,transparent);border-radius:2px;}
+.logo3d{width:88px;height:88px;margin:0 auto 28px;border-radius:24px;background:linear-gradient(135deg,#5865f2,#eb459e);display:flex;align-items:center;justify-content:center;font-size:42px;transform:translateZ(50px);box-shadow:0 20px 40px #5865f266;animation:logoSpin 6s ease-in-out infinite;}
+@keyframes logoSpin{0%,100%{transform:translateZ(50px) rotateX(-8deg) rotateY(0deg);}50%{transform:translateZ(60px) rotateX(-12deg) rotateY(12deg);}}
+.step-title{font-size:clamp(22px,3.4vw,30px);font-weight:800;line-height:1.2;margin:0 0 14px;color:#fff;transform:translateZ(30px);letter-spacing:-.01em;}
+.step-sub{color:var(--muted);font-size:15px;line-height:1.65;margin:0 0 32px;transform:translateZ(20px);}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;transform-style:preserve-3d;}
+.stat{background:linear-gradient(160deg,#1e1f22,#17181a);border:1px solid #ffffff10;border-radius:16px;padding:22px 10px;transform:translateZ(25px);transition:transform .25s;}
+.stat:hover{transform:translateZ(45px);}
+.stat b{display:block;font-size:26px;color:#fff;margin-bottom:4px;}
+.stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.badge{display:inline-block;background:linear-gradient(135deg,#23a55a,#1e8f4e);color:#fff;font-weight:800;font-size:18px;padding:10px 26px;border-radius:12px;margin-bottom:28px;transform:translateZ(35px);box-shadow:0 12px 28px #23a55a55;}
+.btn{appearance:none;border:0;cursor:pointer;background:var(--brand);color:#fff;font-family:var(--font);font-weight:700;font-size:16px;padding:15px 22px;border-radius:12px;width:100%;transition:background .15s,transform .1s,box-shadow .15s;transform:translateZ(30px);box-shadow:0 10px 24px #5865f244;}
+.btn:hover{background:var(--brand-2);box-shadow:0 14px 30px #5865f266;}
+.btn:active{transform:translateZ(30px) scale(.98);}
+.btn.ghost{background:transparent;color:var(--muted);box-shadow:none;margin-top:10px;}
+.btn.ghost:hover{color:#fff;background:#ffffff0a;}
+.input{width:100%;background:#1e1f22;border:1px solid #ffffff14;color:#fff;font-family:var(--font);font-size:16px;padding:16px 18px;border-radius:12px;outline:none;margin-bottom:14px;transition:border-color .15s,box-shadow .15s;transform:translateZ(20px);}
+.input:focus{border-color:var(--brand);box-shadow:0 0 0 4px #5865f233;}
+.input::placeholder{color:#6d6f78;}
+.hint{font-size:12px;color:var(--danger);min-height:16px;margin-bottom:12px;text-align:left;}
+.steps-dots{display:flex;gap:8px;justify-content:center;margin-top:30px;transform:translateZ(15px);}
+.dot{width:9px;height:9px;border-radius:50%;background:#ffffff22;transition:.25s;}
+.dot.active{background:var(--brand);box-shadow:0 0 12px #5865f2;transform:scale(1.2);}
+.hidden{display:none !important;}
+
+/* ================= APP ================= açık kaynak*/
+#app{display:none;height:100%;flex-direction:column;}
+#app.show{display:flex;}
+.topbar{height:52px;flex:0 0 52px;background:var(--bg-2);border-bottom:1px solid #00000040;display:flex;align-items:center;gap:12px;padding:0 16px;}
+.topbar .brand{font-weight:800;color:#fff;font-size:15px;display:flex;align-items:center;gap:8px;}
+.topbar .brand .mini{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#5865f2,#eb459e);display:flex;align-items:center;justify-content:center;font-size:14px;}
+.topbar .spacer{flex:1;}
+.topbar .user{display:flex;align-items:center;gap:8px;background:var(--bg-3);border-radius:20px;padding:5px 12px 5px 5px;font-size:13px;}
+.avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#5865f2,#eb459e);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;}
+.logout{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;margin-left:4px;}
+.logout:hover{color:var(--danger);}
+.main{flex:1;display:flex;min-height:0;}
+.sidebar{width:220px;flex:0 0 220px;background:var(--bg-2);border-right:1px solid #00000040;padding:10px 10px;display:flex;flex-direction:column;gap:2px;overflow:auto;}
+.sidebar h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:8px 8px 3px;}
+.side-btn{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:var(--text);font-family:var(--font);font-size:13px;padding:7px 10px;border-radius:8px;cursor:pointer;text-align:left;}
+.side-btn:hover{background:#3f4147;}
+.side-btn.active{background:var(--brand);color:#fff;}
+.props{width:230px;flex:0 0 230px;background:var(--bg-2);border-left:1px solid #00000040;padding:14px 14px;display:flex;flex-direction:column;gap:14px;overflow:auto;}
+.props h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 2px;}
+.prop-group{display:flex;flex-direction:column;gap:8px;}
+.prop-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--text);}
+.prop-row label{color:var(--muted);}
+input[type="color"]{width:42px;height:32px;border:1px solid #ffffff22;border-radius:8px;background:transparent;cursor:pointer;padding:2px;}
+input[type="range"]{width:100%;accent-color:var(--brand);}
+select{width:100%;background:var(--bg-3);color:#fff;border:1px solid #ffffff14;border-radius:8px;padding:9px 10px;font-family:var(--font);font-size:13px;outline:none;}
+select:focus{border-color:var(--brand);}
+.num{width:64px;background:var(--bg-3);color:#fff;border:1px solid #ffffff14;border-radius:8px;padding:7px 8px;font-family:var(--font);font-size:13px;text-align:center;outline:none;}
+.num:focus{border-color:var(--brand);}
+.text-input-full{width:100%;background:var(--bg-3);color:#fff;border:1px solid #ffffff14;border-radius:8px;padding:9px 10px;font-family:var(--font);font-size:13px;outline:none;}
+.text-input-full:focus{border-color:var(--brand);}
+.shape-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.shape-btn{aspect-ratio:1;border:1px solid #ffffff14;background:var(--bg-3);color:var(--text);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.shape-btn:hover{background:#3f4147;}
+.shape-btn.active{background:var(--brand);border-color:var(--brand);color:#fff;}
+.workspace{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg-3);}
+.toolbar{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:8px 10px;background:var(--bg-2);border-bottom:1px solid #00000040;}
+.tool{border:1px solid #ffffff12;background:var(--bg-3);color:var(--text);font-family:var(--font);font-size:12px;font-weight:600;padding:6px 9px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.tool:hover{background:#3f4147;}
+.tool.active{background:var(--brand);border-color:var(--brand);color:#fff;}
+.tool.danger{color:#ff9a9c;border-color:#ed424544;}
+.tool:disabled{opacity:.45;cursor:not-allowed;}
+.sep{width:1px;height:24px;background:#ffffff14;margin:0 3px;}
+.file-label{display:inline-flex;align-items:center;gap:8px;background:var(--brand);color:#fff;font-weight:700;font-size:12px;padding:6px 10px;border-radius:8px;cursor:pointer;}
+.file-label:hover{background:var(--brand-2);}
+.file-label input{display:none;}
+.zoom{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:12px;}
+.zoom button{width:26px;height:26px;border-radius:6px;border:1px solid #ffffff12;background:var(--bg-3);color:var(--text);cursor:pointer;font-size:14px;}
+.zoom button:hover{background:#3f4147;}
+#zoomLabel{min-width:44px;text-align:center;color:#fff;font-weight:600;}
+.viewport{flex:1;overflow:auto;padding:24px;display:flex;justify-content:center;align-items:flex-start;background:repeating-conic-gradient(#2a2c30 0% 25%, #26282c 0% 50%) 50% / 24px 24px;position:relative;}
+.page-wrap{position:relative;display:inline-block;background:#fff;box-shadow:0 12px 40px #00000066;}
+#pdfCanvas{display:block;}
+#drawCanvas{position:absolute;inset:0;touch-action:none;display:block;}
+#drawCanvas.tool-pen,#drawCanvas.tool-sign,#drawCanvas.tool-link{cursor:crosshair;}
+#drawCanvas.tool-text,#drawCanvas.tool-note{cursor:text;}
+#drawCanvas.tool-erase{cursor:cell;}
+#drawCanvas.tool-shape,#drawCanvas.tool-highlight,#drawCanvas.tool-strike,#drawCanvas.tool-underline,#drawCanvas.tool-stamp,#drawCanvas.tool-crop{cursor:crosshair;}
+#drawCanvas.tool-image{cursor:copy;}
+#drawCanvas.tool-select{cursor:default;}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted);text-align:center;padding:40px;}
+.empty .big{font-size:54px;}
+.statusbar{flex:0 0 32px;height:32px;background:var(--bg-2);border-top:1px solid #00000040;display:flex;align-items:center;gap:16px;padding:0 14px;font-size:12px;color:var(--muted);}
+.statusbar .ok{color:var(--green);}
+.text-input{position:absolute;z-index:20;background:#fff;color:#111;border:2px solid var(--brand);border-radius:4px;padding:4px 8px;outline:none;resize:none;min-width:80px;line-height:1.2;box-shadow:0 4px 16px #00000055;font-family:Arial,sans-serif;}
+.note-input{position:absolute;z-index:21;background:#fef3c7;color:#111;border:2px solid #f59e0b;border-radius:6px;padding:6px 8px;outline:none;resize:both;min-width:140px;min-height:60px;line-height:1.3;box-shadow:0 6px 20px #00000066;font-family:Arial,sans-serif;font-size:13px;}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#111214;color:#fff;border:1px solid #ffffff14;padding:12px 18px;border-radius:10px;font-size:14px;box-shadow:0 12px 40px #00000080;opacity:0;visibility:hidden;transition:.25s;z-index:200;}
+#toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);}
+
+/* arama paneli */
+#searchPanel{
+  position:absolute;top:60px;left:14px;z-index:50;
+  background:var(--bg-2);border:1px solid #ffffff1a;border-radius:12px;
+  padding:12px;width:320px;box-shadow:0 16px 50px #00000099;
+  display:none;
+}
+#searchPanel.show{display:block;}
+#searchPanel .s-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+#searchPanel .s-head b{flex:1;font-size:13px;color:#fff;}
+#searchPanel input{width:100%;background:var(--bg-3);color:#fff;border:1px solid #ffffff14;border-radius:8px;padding:8px 10px;font-family:var(--font);font-size:13px;outline:none;margin-bottom:8px;}
+#searchPanel input:focus{border-color:var(--brand);}
+#searchResults{max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:4px;margin-top:6px;}
+.search-result{background:var(--bg-3);border:1px solid #ffffff10;border-radius:6px;padding:7px 9px;font-size:12px;color:var(--text);cursor:pointer;text-align:left;}
+.search-result:hover{background:#3f4147;border-color:var(--brand);}
+.search-result .pg{color:var(--brand);font-weight:700;font-size:11px;}
+.search-result .snip{color:var(--muted);font-size:11px;display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+.side-btn.action{color:var(--green);}
+
+/* loading overlay */
+#loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#00000066;z-index:40;backdrop-filter:blur(2px);}
+#loading.show{display:flex;}
+.spinner{width:42px;height:42px;border-radius:50%;border:4px solid #ffffff22;border-top-color:var(--brand);animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- ================= 3D ONBOARDING =================3d alan -->
+<div id="onboarding">
+  <div class="floaties">
+    <div class="floaty"></div><div class="floaty"></div><div class="floaty"></div><div class="floaty"></div>
+  </div>
+  <div class="card3d">
+    <div class="card-inner">
+      <div id="step1">
+        <div class="logo3d">.-.</div>
+        <h1 class="step-title">Bedava Bir PDF Açıcı Mı ? O burada</h1>
+        <p class="step-sub">Tarayıcında çalışan, kurulum gerektirmeyen, tamamen ücretsiz PDF görüntüleyici ve düzenleyici. By E.Ç.</p>
+        <button class="btn" id="btnStep1">İleriye →</button>
+        <div class="steps-dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
+      <div id="step2" class="hidden">
+        <div class="logo3d">-.-</div>
+        <h1 class="step-title">0 Telemetri · 0 Veri · 0 Reklam</h1>
+        <p class="step-sub">Dosyaların cihazından çıkmaz. Sunucu yok, takip yok, reklam yok.</p>
+        <div class="stats">
+          <div class="stat"><b>0</b><span>Telemetri</span></div>
+          <div class="stat"><b>0</b><span>Veri</span></div>
+          <div class="stat"><b>0</b><span>Reklam</span></div>
+        </div>
+        <div class="badge">100/100 Bedava-</div>
+        <button class="btn" id="btnStep2Next">İleriye →</button>
+        <button class="btn ghost" id="btnStep2Back">← Geri</button>
+        <div class="steps-dots"><div class="dot"></div><div class="dot active"></div><div class="dot"></div></div>
+      </div>
+      <div id="step3" class="hidden">
+        <div class="logo3d">--</div>
+        <h1 class="step-title">Haydi bi isim koyalım dostum!</h1>
+        <p class="step-sub">Bu isim yalnızca bu tarayıcıda saklanır. İstediğin zaman değiştirebilirsin.</p>
+        <input id="nameInput" class="input" type="text" maxlength="24" placeholder="Adın ne?" autocomplete="off" />
+        <div class="hint" id="nameHint"></div>
+        <button class="btn" id="btnStep3Next">İleriye →</button>
+        <button class="btn ghost" id="btnStep3Back">← Geri</button>
+        <div class="steps-dots"><div class="dot"></div><div class="dot"></div><div class="dot active"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><span class="mini"></span> PDF Studio</div>
+    <div class="spacer"></div>
+    <div class="user">
+      <div class="avatar" id="userAvatar">?</div>
+      <span id="userName">misafir</span>
+      <button class="logout" id="btnLogout">çıkış</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <aside class="sidebar">
+      <h4>Araçlar</h4>
+      <button class="side-btn active" data-tool="select">🖱️ Seç / Taşı</button>
+      <button class="side-btn" data-tool="pen">✏️ Kalem</button>
+      <button class="side-btn" data-tool="text">🔤 Metin</button>
+      <button class="side-btn" data-tool="shape">⬛ Şekil</button>
+      <button class="side-btn" data-tool="highlight">🟨 Vurgula</button>
+      <button class="side-btn" data-tool="strike">🚫 Üstü Çiz</button>
+      <button class="side-btn" data-tool="underline">〰️ Altı Çiz</button>
+      <button class="side-btn" data-tool="note">📝 Not</button>
+      <button class="side-btn" data-tool="sign">✍️ İmza</button>
+      <button class="side-btn" data-tool="stamp">🔖 Damga</button>
+      <button class="side-btn" data-tool="crop">✂️ Kırp</button>
+      <button class="side-btn" data-tool="erase">🧽 Silgi</button>
+
+      <h4>Yeni Araçlar</h4>
+      <button class="side-btn action" id="sbAdvanced">🧰 Araç Merkezi</button>
+      <button class="side-btn" id="sbSearch">🔍 Metin Ara</button>
+      <button class="side-btn action" id="sbOCR">🧠 OCR ile Metin Tanı</button>
+      <button class="side-btn" data-tool="image">🖼️ Görsel Ekle</button>
+      <button class="side-btn" data-tool="link">🔗 Bağlantı Ekle</button>
+      <button class="side-btn action" id="sbPageNumbers">🧾 Sayfa Numarası</button>
+
+      <h4>Sayfa</h4>
+      <button class="side-btn" id="sbPrev">⬅️ Önceki</button>
+      <button class="side-btn" id="sbNext">➡️ Sonraki</button>
+      <button class="side-btn" id="sbRotate">🔄 Döndür</button>
+      <button class="side-btn" id="sbDeletePage">🗑️ Sayfayı Sil</button>
+      <h4>Dosya</h4>
+      <label class="side-btn" style="cursor:pointer;">📂 PDF Aç<input type="file" accept="application/pdf" id="filePicker" hidden /></label>
+      <button class="side-btn" id="sbExport">💾 PDF Kaydet</button>
+      <button class="side-btn" id="sbClear">🧹 Sayfayı Temizle</button>
+    </aside>
+
+    <section class="workspace">
+      <div class="toolbar">
+        <label class="file-label">📂 Aç<input type="file" accept="application/pdf" id="filePicker2" hidden /></label>
+        <div class="sep"></div>
+        <button class="tool" id="toolSelect">🖱️ Seç</button>
+        <button class="tool" id="toolPen">✏️ Kalem</button>
+        <button class="tool" id="toolText">🔤 Metin</button>
+        <button class="tool" id="btnReplaceText" title="PDF içindeki mevcut yazıyı seçip görsel olarak değiştir">✏️ Yazıyı Değiştir</button>
+        <button class="tool" id="toolShape">⬛ Şekil</button>
+        <button class="tool" id="toolHighlight">🟨 Vurgula</button>
+        <button class="tool" id="toolStrike">🚫 Üstü Çiz</button>
+        <button class="tool" id="toolUnderline">〰️ Altı Çiz</button>
+        <button class="tool" id="toolNote">📝 Not</button>
+        <button class="tool" id="toolSign">✍️ İmza</button>
+        <button class="tool" id="toolStamp">🔖 Damga</button>
+        <button class="tool" id="toolCrop">✂️ Kırp</button>
+        <button class="tool" id="toolErase">🧽 Silgi</button>
+        <div class="sep"></div>
+        <button class="tool" id="toolImage">🖼️ Görsel</button>
+        <button class="tool" id="toolLink">🔗 Link</button>
+        <button class="tool" id="btnSearch">🔍 Ara</button>
+        <button class="tool" id="btnOCR" title="Taranmış PDF sayfalarındaki yazıları tanı">🧠 OCR</button>
+        <button class="tool" id="btnAdvanced">🧰 Araçlar</button>
+        <button class="tool" id="btnPageNumbers">🧾 Sayfa No</button>
+        <div class="sep"></div>
+        <div class="zoom">
+          <button id="btnZoomOut">−</button>
+          <span id="zoomLabel">100%</span>
+          <button id="btnZoomIn">+</button>
+        </div>
+        <div class="sep"></div>
+        <button class="tool" id="btnPrev">⬅️</button>
+        <span id="pageLabel" style="font-size:12px;color:var(--muted);min-width:60px;text-align:center;">- / -</span>
+        <button class="tool" id="btnNext">➡️</button>
+        <button class="tool" id="btnRotate">🔄</button>
+        <button class="tool danger" id="btnDeletePage">🗑️</button>
+        <div class="sep"></div>
+        <button class="tool" id="btnUndo">↶ Geri Al</button>
+        <button class="tool danger" id="btnClear">🧹</button>
+        <button class="tool" id="btnExport">💾 Kaydet</button>
+      </div>
+
+      <div class="viewport" id="viewport">
+        <div class="empty" id="emptyState">
+          <div class="big">📄</div>
+          <div><b>Henüz PDF açılmadı</b></div>
+          <div style="font-size:13px;">Yukarıdan "PDF Aç" ile bir dosya seç. Dosya cihazından çıkmaz.</div>
+        </div>
+        <div class="page-wrap hidden" id="pageWrap">
+          <canvas id="pdfCanvas"></canvas>
+          <canvas id="drawCanvas"></canvas>
+        </div>
+      </div>
+
+      <div id="loading"><div class="spinner"></div></div>
+
+      <!-- Arama paneli -->
+      <div id="searchPanel">
+        <div class="s-head">
+          <b> Metin Ara</b>
+          <button class="tool" id="searchClose" style="padding:4px 8px;">✕</button>
+        </div>
+        <input id="searchInput" type="text" placeholder="Aranacak metin..." />
+        <div id="searchResults"></div>
+      </div>
+
+      <div id="ocrPanel" style="display:none;position:absolute;top:60px;right:16px;z-index:51;width:min(460px,calc(100% - 32px));background:var(--bg-2);border:1px solid #ffffff1a;border-radius:12px;padding:12px;box-shadow:0 16px 50px #00000099;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b style="flex:1">🧠 OCR — Tanınan Metin</b><button class="tool" id="ocrClose" style="padding:4px 8px">✕</button></div>
+        <div id="ocrProgress" style="font-size:12px;color:var(--muted);margin-bottom:8px">PDF açıp OCR'ı başlat.</div>
+        <textarea id="ocrText" placeholder="Tanınan metin burada görünecek..." style="width:100%;height:240px;resize:vertical;background:var(--bg-3);color:var(--text);border:1px solid #ffffff20;border-radius:8px;padding:10px;font:12px/1.5 var(--font);"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="tool" id="ocrCurrent">📄 Bu sayfa</button><button class="tool" id="ocrAll">📚 Tüm PDF</button><button class="tool" id="ocrDownload">⬇️ TXT İndir</button><button class="tool" id="ocrSearch">🔍 Metinde Ara</button></div>
+      </div>
+
+      <div id="advancedPanel" style="display:none;position:absolute;inset:70px 16px 45px auto;z-index:60;width:min(440px,calc(100% - 32px));overflow:auto;background:var(--bg-2);border:1px solid #ffffff1a;border-radius:12px;padding:14px;box-shadow:0 16px 50px #00000099;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><b style="flex:1">🧰 PDF Araç Merkezi</b><button class="tool" id="advancedClose">✕</button></div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">İşlemler tarayıcıda yapılır; PDF içeriği bir yapay zekâ servisine gönderilmez. CDN kütüphaneleri ilk kullanımda internetten yüklenebilir.</div>
+        <label style="display:block;font-size:12px;margin:10px 0 5px">PDF birleştir (birden fazla dosya seç)</label>
+        <input id="mergeFiles" type="file" accept="application/pdf,.pdf" multiple style="width:100%;font-size:12px">
+        <button class="tool" id="doMerge" style="margin-top:7px;width:100%">📚 PDF'leri Birleştir</button>
+        <label style="display:block;font-size:12px;margin:14px 0 5px">Sayfa aralığı (ör. 1-3,5)</label>
+        <input id="pageRange" value="1-3" placeholder="1-3,5" style="width:100%;background:var(--bg-3);color:var(--text);border:1px solid #ffffff20;border-radius:7px;padding:9px">
+        <div style="display:flex;gap:7px;margin-top:7px"><button class="tool" id="doSplit" style="flex:1">✂️ Aralığı ayır</button><button class="tool" id="doReorder" style="flex:1">↕️ Sayfaları sırala</button></div>
+        <label style="display:block;font-size:12px;margin:14px 0 5px">Yeni sayfa sırası (ör. 3,1,2,4)</label>
+        <input id="pageOrder" placeholder="3,1,2,4" style="width:100%;background:var(--bg-3);color:var(--text);border:1px solid #ffffff20;border-radius:7px;padding:9px">
+        <button class="tool" id="doCompress" style="margin-top:14px;width:100%">🗜️ PDF sıkıştır (görsele dönüştürür)</button>
+        <button class="tool" id="doOCRPDF" style="margin-top:7px;width:100%">🧠 OCR metnini PDF'ye göm (beta)</button>
+        <button class="tool" id="doImages" style="margin-top:7px;width:100%">🖼️ Sayfayı PNG olarak indir</button>
+        <button class="tool" id="doFill" style="margin-top:7px;width:100%">📝 Sayfaya form metni ekle</button>
+        <button class="tool danger" id="doRedact" style="margin-top:7px;width:100%">🔒 Kalıcı sansür (sayfayı düzleştirir)</button>
+        <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">Sıkıştırma ve kalıcı sansür sayfaları görsele dönüştürür; metin seçimi, bağlantılar ve vektör kalitesi etkilenebilir. Sansürleme tüm sayfaları düzleştirir ve seçtiğin sayfadaki alanı siyah kapatır. Önemli dosyada önce kopya sakla.</div>
+      </div>
+
+      <div class="statusbar">
+        <span id="statusText">Hazır</span>
+        <span class="ok">By E.Ç.</span>
+      </div>
+    </section>
+
+    <aside class="props">
+      <div>
+        <h4>Kalem</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>Renk</label><input type="color" id="penColor" value="#ed4245" /></div>
+          <div class="prop-row"><label>Kalınlık</label><input class="num" id="penWidth" type="number" min="1" max="40" step="1" value="3" /></div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Metin</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>Yazı Tipi</label></div>
+          <select id="textFont">
+            <option value="Arial">Arial</option>
+            <option value="Helvetica">Helvetica</option>
+            <option value="Times-Roman">Times (Serif)</option>
+            <option value="Courier">Courier (Mono)</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Impact">Impact</option>
+            <option value="Comic Sans MS">Comic Sans</option>
+          </select>
+          <div class="prop-row"><label>Boyut (pt)</label><input class="num" id="textSize" type="number" min="6" max="200" step="1" value="16" /></div>
+          <div class="prop-row"><label>Renk</label><input type="color" id="textColor" value="#111111" /></div>
+          <div class="prop-row"><label>Kalın</label><input type="checkbox" id="textBold" /></div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Vurgu / Çizgi</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>Renk</label><input type="color" id="hlColor" value="#facc15" /></div>
+          <div class="prop-row"><label>Opaklık</label><input class="num" id="hlOpacity" type="number" min="10" max="100" step="5" value="40" /></div>
+          <div class="prop-row"><label>Çizgi Kalınlığı</label><input class="num" id="lineWidth" type="number" min="1" max="10" step="1" value="2" /></div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Şekil</h4>
+        <div class="prop-group">
+          <div class="shape-grid">
+            <button class="shape-btn active" data-shape="rect">▭</button>
+            <button class="shape-btn" data-shape="circle">◯</button>
+            <button class="shape-btn" data-shape="line">／</button>
+            <button class="shape-btn" data-shape="arrow">→</button>
+            <button class="shape-btn" data-shape="triangle">△</button>
+            <button class="shape-btn" data-shape="star">★</button>
+          </div>
+          <div class="prop-row"><label>Dolgu</label><input type="color" id="shapeFill" value="#5865f2" /></div>
+          <div class="prop-row"><label>Çizgi</label><input type="color" id="shapeStroke" value="#1e1f22" /></div>
+          <div class="prop-row"><label>Kalınlık</label><input class="num" id="shapeWidth" type="number" min="0" max="30" step="1" value="2" /></div>
+          <div class="prop-row"><label>Dolu</label><input type="checkbox" id="shapeFilled" checked /></div>
+        </div>
+      </div>
+
+      <div>
+        <h4>İmza</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>Renk</label><input type="color" id="signColor" value="#1e40af" /></div>
+          <div class="prop-row"><label>Kalınlık</label><input class="num" id="signWidth" type="number" min="1" max="20" step="1" value="2" /></div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Not / Yorum</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>Arka Plan</label><input type="color" id="noteBg" value="#fef3c7" /></div>
+          <div class="prop-row"><label>Yazı Rengi</label><input type="color" id="noteFg" value="#111111" /></div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Damga</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>Metin</label></div>
+          <input id="stampText" class="text-input-full" type="text" value="ONAYLANDI" maxlength="30" />
+          <div class="prop-row"><label>Renk</label><input type="color" id="stampColor" value="#dc2626" /></div>
+          <div class="prop-row"><label>Boyut (pt)</label><input class="num" id="stampSize" type="number" min="10" max="120" step="2" value="36" /></div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Görsel</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>Genişlik</label><input class="num" id="imageWidth" type="number" min="20" max="800" step="10" value="200" /></div>
+          <div class="prop-row"><label>Yükseklik</label><input class="num" id="imageHeight" type="number" min="20" max="800" step="10" value="150" /></div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Bağlantı</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>URL</label></div>
+          <input id="linkUrl" class="text-input-full" type="url" placeholder="https://..." />
+          <div class="prop-row" style="font-size:11px;color:var(--muted);line-height:1.4;">
+            <span>Bağlantı aracıyla sayfada bir alan seç, URL gir. Kaydedince tıklanabilir olur.</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Sayfa Numarası</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>Konum</label>
+            <select id="pnPos">
+              <option value="bottom-center">Alt Orta</option>
+              <option value="bottom-right">Alt Sağ</option>
+              <option value="bottom-left">Alt Sol</option>
+              <option value="top-center">Üst Orta</option>
+              <option value="top-right">Üst Sağ</option>
+              <option value="top-left">Üst Sol</option>
+            </select>
+          </div>
+          <div class="prop-row"><label>Format</label>
+            <select id="pnFormat">
+              <option value="{n}">1</option>
+              <option value="{n} / {total}">1 / 10</option>
+              <option value="Sayfa {n}">Sayfa 1</option>
+              <option value="- {n} -">- 1 -</option>
+            </select>
+          </div>
+          <div class="prop-row"><label>Boyut (pt)</label><input class="num" id="pnSize" type="number" min="8" max="40" step="1" value="12" /></div>
+          <div class="prop-row"><label>Renk</label><input type="color" id="pnColor" value="#333333" /></div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Silgi</h4>
+        <div class="prop-group">
+          <div class="prop-row"><label>Boyut</label><input class="num" id="eraserSize" type="number" min="4" max="80" step="1" value="18" /></div>
+          <div class="prop-row" style="font-size:11px;color:var(--muted);line-height:1.4;">
+            <span>Silgi beyaz boya gibi çalışır; kaydedince PDF'te beyaz iz olarak kalır.</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4>Taşıma</h4>
+        <div class="prop-group">
+          <div class="prop-row" style="font-size:11px;color:var(--muted);line-height:1.4;">
+            <span>"Seç" aracıyla metin, not, damga, görsel veya link üzerine tıkla ve sürükle.</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+const $ = (id)=>document.getElementById(id);
+let toastTimer;
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+function setStatus(msg){ $('statusText').textContent = msg; }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function showLoading(on){ $('loading').classList.toggle('show', !!on); }
+
+/* ============ ONBOARDING ============ */
+const LS_KEY = 'pdfstudio_user_v1';
+function goStep(n){
+  for(let i=1;i<=3;i++) $('step'+i).classList.toggle('hidden', i!==n);
+  if(n===3) setTimeout(()=>$('nameInput').focus(), 60);
+}
+$('btnStep1').addEventListener('click', ()=>goStep(2));
+$('btnStep2Next').addEventListener('click', ()=>goStep(3));
+$('btnStep2Back').addEventListener('click', ()=>goStep(1));
+$('btnStep3Back').addEventListener('click', ()=>goStep(2));
+$('btnStep3Next').addEventListener('click', finishOnboarding);
+$('btnLogout').addEventListener('click', logout);
+$('nameInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') finishOnboarding(); });
+
+function finishOnboarding(){
+  const input = $('nameInput'), hint = $('nameHint');
+  const name = (input.value || '').trim();
+  if(name.length < 2){ hint.textContent = 'En az 2 karakterlik bir isim gir dostum 🙂'; input.focus(); return; }
+  hint.textContent = '';
+  localStorage.setItem(LS_KEY, JSON.stringify({ name, createdAt: Date.now() }));
+  bootApp(name);
+}
+function logout(){
+  if(!confirm('Çıkış yapılsın mı? İsmin bu tarayıcıdan silinecek.')) return;
+  localStorage.removeItem(LS_KEY); location.reload();
+}
+
+/* ============ APP ============ */
+let pdfjsLib = null;
+
+const state = {
+  pdfDoc:null, fileName:'', pageNum:1, scale:1.25, tool:'select',
+  items:[], currentItem:null, loadedBytes:null,
+  penColor:'#ed4245', penWidth:3,
+  textFont:'Arial', textSize:16, textColor:'#111111', textBold:false,
+  shapeKind:'rect', shapeFill:'#5865f2', shapeStroke:'#1e1f22', shapeWidth:2, shapeFilled:true,
+  eraserSize:18,
+  hlColor:'#facc15', hlOpacity:40, lineWidth:2,
+  signColor:'#1e40af', signWidth:2,
+  noteBg:'#fef3c7', noteFg:'#111111',
+  stampText:'ONAYLANDI', stampColor:'#dc2626', stampSize:36,
+  imageWidth:200, imageHeight:150,
+  pageRotations:{}, cropBoxes:{},
+  dragItem:null, dragOffset:null, pendingCrop:null,
+  searchQuery:'', searchAllResults:[], searchActive:false,
+  ocrTexts:{}, ocrData:{}, ocrBusy:false,
+  linkDraft:null,
+  pageNumberConfig:{pos:'bottom-center', format:'{n}', size:12, color:'#333333'},
+  history:[],
+};
+
+const pdfCanvas = $('pdfCanvas');
+const drawCanvas = $('drawCanvas');
+const drawCtx = drawCanvas.getContext('2d');
+
+async function bootApp(name){
+  $('onboarding').classList.add('hide');
+  $('app').classList.add('show');
+  $('userName').textContent = name;
+  $('userAvatar').textContent = name.charAt(0).toUpperCase();
+  try{
+    pdfjsLib = await import('pdfjs-dist');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs';
+  }catch(err){ toast('PDF.js yüklenemedi: ' + err.message); return; }
+  bindAppEvents();
+  bindPropsEvents();
+}
+
+function bindAppEvents(){
+  const onChange = (e)=>{ const f = e.target.files && e.target.files[0]; if(f) loadPDFFile(f); e.target.value=''; };
+  $('filePicker').addEventListener('change', onChange);
+  $('filePicker2').addEventListener('change', onChange);
+
+  document.querySelectorAll('.side-btn[data-tool]').forEach(b=>{
+    b.addEventListener('click', ()=>setTool(b.dataset.tool));
+  });
+  const toolMap = {
+    toolSelect:'select', toolPen:'pen', toolText:'text', toolShape:'shape',
+    toolHighlight:'highlight', toolStrike:'strike', toolUnderline:'underline',
+    toolNote:'note', toolSign:'sign', toolStamp:'stamp', toolCrop:'crop',
+    toolErase:'erase', toolImage:'image', toolLink:'link'
+  };
+  Object.keys(toolMap).forEach(id=>{
+    const el = $(id);
+    if(el) el.addEventListener('click', ()=>setTool(toolMap[id]));
+  });
+
+  $('btnZoomIn').addEventListener('click', zoomIn);
+  $('btnZoomOut').addEventListener('click', zoomOut);
+  $('btnPrev').addEventListener('click', prevPage);
+  $('btnNext').addEventListener('click', nextPage);
+  $('sbPrev').addEventListener('click', prevPage);
+  $('sbNext').addEventListener('click', nextPage);
+  $('btnRotate').addEventListener('click', rotatePage);
+  $('sbRotate').addEventListener('click', rotatePage);
+  $('btnDeletePage').addEventListener('click', deletePage);
+  $('sbDeletePage').addEventListener('click', deletePage);
+  $('btnExport').addEventListener('click', exportPDF);
+  $('sbExport').addEventListener('click', exportPDF);
+  $('btnClear').addEventListener('click', clearPage);
+  $('sbClear').addEventListener('click', clearPage);
+  $('btnUndo').addEventListener('click', undo);
+
+  $('btnReplaceText').addEventListener('click', ()=>{ if(!state.pdfDoc){toast('Önce bir PDF aç');return;} const activating=state.tool!=='replaceText'; setTool(activating?'replaceText':'select'); toast(activating?'PDF içindeki değiştirmek istediğin yazıya tıkla.':'Seçim aracına dönüldü.'); });
+  $('btnSearch').addEventListener('click', toggleSearch);
+  $('sbSearch').addEventListener('click', toggleSearch);
+  $('searchClose').addEventListener('click', ()=>{ $('searchPanel').classList.remove('show'); state.searchActive=false; redrawOverlay(); });
+  $('searchInput').addEventListener('input', debounce(doSearch, 350));
+  $('btnOCR').addEventListener('click', toggleOCRPanel);
+  $('sbOCR').addEventListener('click', toggleOCRPanel);
+  $('ocrClose').addEventListener('click', ()=> $('ocrPanel').style.display='none');
+  $('ocrCurrent').addEventListener('click', ()=>runOCR(false));
+  $('ocrAll').addEventListener('click', ()=>runOCR(true));
+  $('ocrDownload').addEventListener('click', downloadOCRText);
+  $('ocrSearch').addEventListener('click', ()=>{ $('searchPanel').classList.add('show'); state.searchActive=true; $('searchInput').focus(); doSearch(); });
+  $('btnAdvanced').addEventListener('click', toggleAdvanced);
+  $('sbAdvanced').addEventListener('click', toggleAdvanced);
+  $('advancedClose').addEventListener('click', ()=> $('advancedPanel').style.display='none');
+  $('doMerge').addEventListener('click', mergePDFs);
+  $('doSplit').addEventListener('click', splitPDFRange);
+  $('doReorder').addEventListener('click', reorderPDFPages);
+  $('doCompress').addEventListener('click', compressPDF);
+  $('doOCRPDF').addEventListener('click', exportSearchableOCRPDF);
+  $('doImages').addEventListener('click', exportCurrentPagePNG);
+  $('doFill').addEventListener('click', addFormText);
+  $('doRedact').addEventListener('click', secureRedactPDF);
+
+  $('btnPageNumbers').addEventListener('click', addPageNumbers);
+  $('sbPageNumbers').addEventListener('click', addPageNumbers);
+
+  drawCanvas.addEventListener('contextmenu', e=>e.preventDefault());
+
+  window.addEventListener('keydown', (e)=>{
+    const tag = (e.target && e.target.tagName) || '';
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if(e.ctrlKey || e.metaKey){
+      if(e.key === 'z' || e.key === 'Z'){ e.preventDefault(); undo(); }
+      if(e.key === 's' || e.key === 'S'){ e.preventDefault(); exportPDF(); }
+    }
+  });
+}
+
+function debounce(fn, ms){
+  let t;
+  return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), ms); };
+}
+
+function bindPropsEvents(){
+  document.querySelectorAll('.props input, .props select, .props button, .sidebar button, .sidebar label, .toolbar button, .toolbar label, #searchPanel input, #searchPanel button')
+    .forEach(el=>{
+      el.addEventListener('pointerdown', (e)=>e.stopPropagation());
+      el.addEventListener('mousedown',   (e)=>e.stopPropagation());
+    });
+
+  $('penColor').addEventListener('input', e=>{ state.penColor = e.target.value; });
+  $('penWidth').addEventListener('input', e=>{ state.penWidth = clamp(parseInt(e.target.value)||1,1,40); });
+
+  $('textFont').addEventListener('change', e=>{ state.textFont = e.target.value; });
+  $('textSize').addEventListener('input', e=>{ state.textSize = clamp(parseInt(e.target.value)||16,6,200); });
+  $('textColor').addEventListener('input', e=>{ state.textColor = e.target.value; });
+  $('textBold').addEventListener('change', e=>{ state.textBold = e.target.checked; });
+
+  $('hlColor').addEventListener('input', e=>{ state.hlColor = e.target.value; });
+  $('hlOpacity').addEventListener('input', e=>{ state.hlOpacity = clamp(parseInt(e.target.value)||40,10,100); });
+  $('lineWidth').addEventListener('input', e=>{ state.lineWidth = clamp(parseInt(e.target.value)||2,1,10); });
+
+  document.querySelectorAll('.shape-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      state.shapeKind = b.dataset.shape;
+      document.querySelectorAll('.shape-btn').forEach(x=>x.classList.toggle('active', x===b));
+      setTool('shape');
+    });
+  });
+  $('shapeFill').addEventListener('input', e=>{ state.shapeFill = e.target.value; });
+  $('shapeStroke').addEventListener('input', e=>{ state.shapeStroke = e.target.value; });
+  $('shapeWidth').addEventListener('input', e=>{ state.shapeWidth = clamp(parseInt(e.target.value)||0,0,30); });
+  $('shapeFilled').addEventListener('change', e=>{ state.shapeFilled = e.target.checked; });
+
+  $('signColor').addEventListener('input', e=>{ state.signColor = e.target.value; });
+  $('signWidth').addEventListener('input', e=>{ state.signWidth = clamp(parseInt(e.target.value)||2,1,20); });
+
+  $('noteBg').addEventListener('input', e=>{ state.noteBg = e.target.value; });
+  $('noteFg').addEventListener('input', e=>{ state.noteFg = e.target.value; });
+
+  $('stampText').addEventListener('input', e=>{ state.stampText = e.target.value || 'ONAYLANDI'; });
+  $('stampColor').addEventListener('input', e=>{ state.stampColor = e.target.value; });
+  $('stampSize').addEventListener('input', e=>{ state.stampSize = clamp(parseInt(e.target.value)||36,10,120); });
+
+  $('imageWidth').addEventListener('input', e=>{ state.imageWidth = clamp(parseInt(e.target.value)||200,20,800); });
+  $('imageHeight').addEventListener('input', e=>{ state.imageHeight = clamp(parseInt(e.target.value)||150,20,800); });
+
+  $('linkUrl').addEventListener('input', e=>{ state.linkDraft = e.target.value; });
+
+  $('pnPos').addEventListener('change', e=>{ state.pageNumberConfig.pos = e.target.value; });
+  $('pnFormat').addEventListener('change', e=>{ state.pageNumberConfig.format = e.target.value; });
+  $('pnSize').addEventListener('input', e=>{ state.pageNumberConfig.size = clamp(parseInt(e.target.value)||12,8,40); });
+  $('pnColor').addEventListener('input', e=>{ state.pageNumberConfig.color = e.target.value; });
+
+  $('eraserSize').addEventListener('input', e=>{ state.eraserSize = clamp(parseInt(e.target.value)||18,4,80); });
+}
+
+/* ---- history / undo ---- */
+function pushHistory(){
+  state.history.push(state.items.slice());
+  if(state.history.length > 50) state.history.shift();
+}
+function undo(){
+  if(!state.history.length){ toast('Geri alınacak işlem yok'); return; }
+  state.items = state.history.pop();
+  redrawOverlay(); toast('Geri alındı');
+}
+
+/* ---- PDF yükleme ---- */
+async function loadPDFFile(file){
+  setStatus('PDF yükleniyor...'); showLoading(true);
+  try{
+    const buf = await file.arrayBuffer();
+    state.loadedBytes = new Uint8Array(buf);
+    state.fileName = file.name.replace(/\.pdf$/i,'');
+    state.pdfDoc = await pdfjsLib.getDocument({ data: state.loadedBytes.slice() }).promise;
+    state.pageNum = 1; state.items = []; state.history = [];
+    state.pageRotations = {}; state.cropBoxes = {}; state.ocrTexts = {}; state.ocrData = {}; $('ocrText').value=''; $('ocrProgress').textContent='PDF açıldı. OCR için Bu sayfa veya Tüm PDF seç.';
+    await renderPage();
+    $('emptyState').classList.add('hidden');
+    $('pageWrap').classList.remove('hidden');
+    toast('Açıldı: ' + file.name);
+  }catch(err){ setStatus('Hata'); toast('PDF açılamadı: ' + err.message); }
+  finally{ showLoading(false); }
+}
+
+/* ---- render ---- */
+async function renderPage(){
+  if(!state.pdfDoc) return;
+  const page = await state.pdfDoc.getPage(state.pageNum);
+  const rot = state.pageRotations[state.pageNum] || 0;
+  const crop = state.cropBoxes[state.pageNum];
+  const viewportOpts = { scale: state.scale, rotation: (page.rotate || 0) + rot };
+  if(crop){
+    const baseVP = page.getViewport({ scale: 1, rotation: (page.rotate || 0) + rot });
+    viewportOpts.box = [
+      crop.x * baseVP.width,
+      (1 - crop.y - crop.h) * baseVP.height,
+      (crop.x + crop.w) * baseVP.width,
+      (1 - crop.y) * baseVP.height,
+    ];
+  }
+  const viewport = page.getViewport(viewportOpts);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  pdfCanvas.width  = Math.floor(viewport.width  * dpr);
+  pdfCanvas.height = Math.floor(viewport.height * dpr);
+  pdfCanvas.style.width  = Math.floor(viewport.width)  + 'px';
+  pdfCanvas.style.height = Math.floor(viewport.height) + 'px';
+
+  const ctx = pdfCanvas.getContext('2d');
+  await page.render({
+    canvasContext: ctx,
+    transform: dpr !== 1 ? [dpr,0,0,dpr,0,0] : null,
+    viewport
+  }).promise;
+
+  drawCanvas.width  = pdfCanvas.width;
+  drawCanvas.height = pdfCanvas.height;
+  drawCanvas.style.width  = pdfCanvas.style.width;
+  drawCanvas.style.height = pdfCanvas.style.height;
+  redrawOverlay();
+
+  $('pageLabel').textContent = `${state.pageNum} / ${state.pdfDoc.numPages}`;
+  $('zoomLabel').textContent = Math.round(state.scale*100) + '%';
+  $('btnPrev').disabled = state.pageNum <= 1;
+  $('btnNext').disabled = state.pageNum >= state.pdfDoc.numPages;
+  setStatus(`Sayfa ${state.pageNum}/${state.pdfDoc.numPages} · ${Math.round(viewport.width)}×${Math.round(viewport.height)}px @ ${dpr}x${rot?' · döndürüldü '+rot+'°':''}${crop?' · kırpıldı':''}`);
+}
+
+/* ---- overlay ---- */
+function redrawOverlay(){
+  const W = drawCanvas.width, H = drawCanvas.height;
+  drawCtx.clearRect(0,0,W,H);
+
+  if(state.searchActive && state.searchAllResults.length){
+    drawCtx.save();
+    drawCtx.fillStyle = 'rgba(250,204,21,0.35)';
+    for(const r of state.searchAllResults){
+      if(r.pageNum !== state.pageNum) continue;
+      drawCtx.fillRect(r.x*W, r.y*H, r.w*W, r.h*H);
+    }
+    drawCtx.restore();
+  }
+
+  for(const it of state.items){
+    if(it.pageNum !== state.pageNum) continue;
+    drawItem(drawCtx, it, W, H);
+  }
+
+  if(state.currentItem && state.currentItem.type === 'link'){
+    const it = state.currentItem;
+    drawCtx.save();
+    drawCtx.fillStyle = 'rgba(88,101,242,0.20)';
+    drawCtx.strokeStyle = '#5865f2';
+    drawCtx.lineWidth = 2;
+    drawCtx.setLineDash([5,3]);
+    const x = Math.min(it.x1,it.x2)*W, y = Math.min(it.y1,it.y2)*H;
+    const w = Math.abs(it.x2-it.x1)*W, h = Math.abs(it.y2-it.y1)*H;
+    drawCtx.fillRect(x,y,w,h);
+    drawCtx.strokeRect(x,y,w,h);
+    drawCtx.setLineDash([]);
+    drawCtx.restore();
+  }
+
+  if(state.pendingCrop && state.pendingCrop.pageNum === state.pageNum){
+    const c = state.pendingCrop;
+    const x1=c.x1*W, y1=c.y1*H, x2=c.x2*W, y2=c.y2*H;
+    drawCtx.save();
+    drawCtx.fillStyle = 'rgba(0,0,0,0.45)';
+    drawCtx.fillRect(0,0,W,H);
+    drawCtx.clearRect(Math.min(x1,x2), Math.min(y1,y2), Math.abs(x2-x1), Math.abs(y2-y1));
+    drawCtx.strokeStyle = '#5865f2';
+    drawCtx.lineWidth = 2;
+    drawCtx.strokeRect(Math.min(x1,x2), Math.min(y1,y2), Math.abs(x2-x1), Math.abs(y2-y1));
+    drawCtx.restore();
+  }
+}
+
+function drawItem(ctx, it, W, H){
+  if(it.type === 'stroke' || it.type === 'sign'){
+    ctx.save();
+    ctx.strokeStyle = it.color;
+    ctx.lineWidth = Math.max(1, it.width * (W/612));
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath();
+    it.points.forEach((p,i)=>{ const x=p.x*W, y=p.y*H; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.stroke();
+    ctx.restore();
+  }
+  else if(it.type === 'erase'){
+    ctx.save();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.lineWidth = Math.max(4, it.size * (W/612));
+    ctx.beginPath();
+    it.points.forEach((p,i)=>{ const x=p.x*W, y=p.y*H; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.stroke();
+    ctx.restore();
+  }
+  else if(it.type === 'text'){
+    ctx.save();
+    const px = it.size * (W/612);
+    ctx.font = `${it.bold?'bold ':''}${px}px ${it.font}, sans-serif`;
+    ctx.fillStyle = it.color;
+    ctx.textBaseline = 'top';
+    const lines = String(it.text).split('\n');
+    let ty = it.y*H;
+    for(const line of lines){
+      ctx.fillText(line, it.x*W, ty);
+      ty += px * 1.2;
+    }
+    ctx.restore();
+  }
+  else if(it.type === 'highlight'){
+    ctx.save();
+    const x1=it.x1*W, y1=it.y1*H, x2=it.x2*W, y2=it.y2*H;
+    ctx.fillStyle = hexToRgba(it.color, it.opacity/100);
+    ctx.fillRect(Math.min(x1,x2), Math.min(y1,y2), Math.abs(x2-x1), Math.abs(y2-y1));
+    ctx.restore();
+  }
+  else if(it.type === 'strike' || it.type === 'underline'){
+    ctx.save();
+    const x1=it.x1*W, y1=it.y1*H, x2=it.x2*W, y2=it.y2*H;
+    const lw = Math.max(1, it.width * (W/612));
+    ctx.strokeStyle = it.color; ctx.lineWidth = lw; ctx.lineCap='round';
+    if(it.type === 'strike'){
+      const midY = (y1+y2)/2;
+      ctx.beginPath(); ctx.moveTo(x1, midY); ctx.lineTo(x2, midY); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(x1, y2); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  else if(it.type === 'shape'){
+    ctx.save();
+    const x1=it.x1*W, y1=it.y1*H, x2=it.x2*W, y2=it.y2*H;
+    const lw = Math.max(0, it.width * (W/612));
+    ctx.lineWidth = lw; ctx.strokeStyle = it.strokeColor; ctx.fillStyle = it.fillColor;
+    const filled = it.filled && it.kind !== 'line' && it.kind !== 'arrow';
+    ctx.beginPath();
+    if(it.kind === 'rect'){ ctx.rect(x1, y1, x2-x1, y2-y1); if(filled) ctx.fill(); if(lw>0) ctx.stroke(); }
+    else if(it.kind === 'circle'){ const cx=(x1+x2)/2, cy=(y1+y2)/2; const rx=Math.abs(x2-x1)/2, ry=Math.abs(y2-y1)/2; ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2); if(filled) ctx.fill(); if(lw>0) ctx.stroke(); }
+    else if(it.kind === 'line'){ ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
+    else if(it.kind === 'arrow'){ ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); const ang = Math.atan2(y2-y1, x2-x1); const head = Math.max(10, lw*3); ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-head*Math.cos(ang-0.4), y2-head*Math.sin(ang-0.4)); ctx.lineTo(x2-head*Math.cos(ang+0.4), y2-head*Math.sin(ang+0.4)); ctx.closePath(); ctx.fillStyle = it.strokeColor; ctx.fill(); }
+    else if(it.kind === 'triangle'){ ctx.moveTo((x1+x2)/2, y1); ctx.lineTo(x2, y2); ctx.lineTo(x1, y2); ctx.closePath(); if(filled) ctx.fill(); if(lw>0) ctx.stroke(); }
+    else if(it.kind === 'star'){ const cx=(x1+x2)/2, cy=(y1+y2)/2; const R=Math.min(Math.abs(x2-x1),Math.abs(y2-y1))/2; const r=R*0.45; for(let i=0;i<10;i++){ const ang = -Math.PI/2 + i*Math.PI/5; const rad = i%2===0?R:r; const px = cx+rad*Math.cos(ang), py = cy+rad*Math.sin(ang); i===0?ctx.moveTo(px,py):ctx.lineTo(px,py); } ctx.closePath(); if(filled) ctx.fill(); if(lw>0) ctx.stroke(); }
+    ctx.restore();
+  }
+  else if(it.type === 'note'){
+    ctx.save();
+    const x = it.x*W, y = it.y*H;
+    const w = it.w*W, h = it.h*H;
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
+    ctx.fillStyle = it.bg;
+    ctx.fillRect(x, y, w, h);
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = Math.max(1, 2*(W/612));
+    ctx.strokeRect(x, y, w, h);
+    const fs = Math.max(11, 13*(W/612));
+    ctx.fillStyle = it.fg; ctx.font = `${fs}px Arial,sans-serif`; ctx.textBaseline = 'top';
+    wrapText(ctx, it.text, x+6*(W/612), y+6*(H/612), w-12*(W/612), fs*1.25);
+    ctx.restore();
+  }
+  else if(it.type === 'stamp'){
+    ctx.save();
+    const x = it.x*W, y = it.y*H;
+    const size = it.size * (W/612);
+    ctx.font = `bold ${size}px Arial,sans-serif`;
+    ctx.fillStyle = it.color; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.85;
+    ctx.translate(x, y); ctx.rotate(-Math.PI/12);
+    ctx.fillText(it.text, 0, 0);
+    const m = ctx.measureText(it.text);
+    const tw = m.width, th = size;
+    ctx.strokeStyle = it.color; ctx.lineWidth = Math.max(2, size*0.08);
+    ctx.strokeRect(-tw/2-8, -th/2-4, tw+16, th+8);
+    ctx.restore();
+  }
+  else if(it.type === 'image'){
+    ctx.save();
+    const x = it.x*W, y = it.y*H;
+    const w = it.w*W, h = it.h*H;
+    if(it.imgEl){
+      ctx.drawImage(it.imgEl, x, y, w, h);
+    } else {
+      ctx.fillStyle = '#e5e7eb';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, w, h);
+    }
+    if(state.dragItem === it){
+      ctx.strokeStyle = '#5865f2'; ctx.lineWidth = 2;
+      ctx.setLineDash([6,4]);
+      ctx.strokeRect(x-2, y-2, w+4, h+4);
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+  }
+  else if(it.type === 'link'){
+    ctx.save();
+    const x = it.x*W, y = it.y*H;
+    const w = it.w*W, h = it.h*H;
+    ctx.fillStyle = 'rgba(88,101,242,0.15)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#5865f2';
+    ctx.lineWidth = Math.max(1, 2*(W/612));
+    ctx.setLineDash([5,3]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+    const fs = Math.max(9, 11*(W/612));
+    ctx.fillStyle = '#1e3a8a';
+    ctx.font = `${fs}px Arial,sans-serif`;
+    ctx.textBaseline = 'middle';
+    const label = '🔗 ' + (it.url.length > 30 ? it.url.slice(0,28)+'…' : it.url);
+    ctx.fillText(label, x+4, y+h/2);
+    ctx.restore();
+  }
+  else if(it.type === 'pagenum'){
+    ctx.save();
+    const fs = it.size * (W/612);
+    ctx.font = `${fs}px Helvetica, Arial, sans-serif`;
+    ctx.fillStyle = it.color;
+    ctx.textBaseline = 'middle';
+    const txt = it.text;
+    const m = ctx.measureText(txt);
+    const tw = m.width, th = fs;
+    const margin = 30 * (W/612);
+    let x, y;
+    switch(it.pos){
+      case 'bottom-center': x = (W - tw)/2; y = H - margin - th/2; break;
+      case 'bottom-right':  x = W - margin - tw; y = H - margin - th/2; break;
+      case 'bottom-left':   x = margin; y = H - margin - th/2; break;
+      case 'top-center':    x = (W - tw)/2; y = margin + th/2; break;
+      case 'top-right':     x = W - margin - tw; y = margin + th/2; break;
+      case 'top-left':      x = margin; y = margin + th/2; break;
+      default: x = (W - tw)/2; y = H - margin - th/2;
+    }
+    ctx.fillText(txt, x, y);
+    ctx.restore();
+  }
+}
+
+function wrapText(ctx, text, x, y, maxW, lineH){
+  const words = String(text).split(/\s+/);
+  let line = ''; let ty = y;
+  for(const w of words){
+    const test = line ? line+' '+w : w;
+    if(ctx.measureText(test).width > maxW && line){
+      ctx.fillText(line, x, ty); line = w; ty += lineH;
+    } else { line = test; }
+  }
+  if(line) ctx.fillText(line, x, ty);
+}
+
+function hexToRgba(hex, a){
+  const h = hex.replace('#','');
+  const n = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+
+/* ---- araç seçimi ---- */
+function setTool(t){
+  state.tool = t;
+  drawCanvas.className = 'tool-' + t;
+  document.querySelectorAll('.side-btn[data-tool]').forEach(b=>b.classList.toggle('active', b.dataset.tool===t));
+  const map = {select:'Select',pen:'Pen',text:'Text',shape:'Shape',highlight:'Highlight',strike:'Strike',underline:'Underline',note:'Note',sign:'Sign',stamp:'Stamp',crop:'Crop',erase:'Erase',image:'Image',link:'Link'};
+  Object.keys(map).forEach(k=>{
+    const el = $('tool'+map[k]);
+    if(el) el.classList.toggle('active', k===t);
+  });
+  const labels = {select:'Seç / Taşı',pen:'Kalem',text:'Metin',replaceText:'PDF yazısını değiştir',shape:'Şekil',highlight:'Vurgula',strike:'Üstü Çiz',underline:'Altı Çiz',note:'Not',sign:'İmza',stamp:'Damga',crop:'Kırp',erase:'Silgi',image:'Görsel Ekle',link:'Bağlantı Ekle'};
+  $('btnReplaceText')?.classList.toggle('active', t==='replaceText');
+  setStatus('Araç: ' + (labels[t] || t));
+}
+
+function getPos(e){
+  const r = drawCanvas.getBoundingClientRect();
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  const cy = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x:(cx-r.left)/r.width, y:(cy-r.top)/r.height };
+}
+
+/* ---- hit test ---- */
+function hitTest(p){
+  const W = drawCanvas.width, H = drawCanvas.height;
+  for(let i=state.items.length-1;i>=0;i--){
+    const it = state.items[i];
+    if(it.pageNum !== state.pageNum) continue;
+
+    if(it.type === 'text'){
+      const px = it.size * (W/612);
+      drawCtx.save();
+      drawCtx.font = `${it.bold?'bold ':''}${px}px ${it.font}, sans-serif`;
+      const lines = String(it.text).split('\n');
+      let maxW = 0;
+      for(const line of lines) maxW = Math.max(maxW, drawCtx.measureText(line).width);
+      drawCtx.restore();
+      const tx = it.x*W, ty = it.y*H;
+      if(p.x*W >= tx && p.x*W <= tx + maxW && p.y*H >= ty && p.y*H <= ty + px*1.2*lines.length) return it;
+    }
+    else if(it.type === 'note' || it.type === 'image' || it.type === 'link'){
+      const x = it.x*W, y = it.y*H, w = it.w*W, h = it.h*H;
+      if(p.x*W >= x && p.x*W <= x+w && p.y*H >= y && p.y*H <= y+h) return it;
+    }
+    else if(it.type === 'stamp'){
+      const x = it.x*W, y = it.y*H;
+      const size = it.size * (W/612);
+      drawCtx.save();
+      drawCtx.font = `bold ${size}px Arial,sans-serif`;
+      const m = drawCtx.measureText(it.text);
+      drawCtx.restore();
+      const tw = m.width, th = size;
+      if(p.x*W >= x - tw/2 - 8 && p.x*W <= x + tw/2 + 8 && p.y*H >= y - th/2 - 4 && p.y*H <= y + th/2 + 4) return it;
+    }
+  }
+  return null;
+}
+
+/* ---- pointer olayları ---- */
+async function replaceExistingPDFTextAt(p){
+  const page = await state.pdfDoc.getPage(state.pageNum);
+  const rot = state.pageRotations[state.pageNum] || 0;
+  const viewport = page.getViewport({scale:state.scale, rotation:(page.rotate||0)+rot});
+  const textContent = await page.getTextContent();
+  const px = p.x * viewport.width, py = p.y * viewport.height;
+  let best = null, bestScore = Infinity;
+  for(const item of textContent.items){
+    if(!item.str || !item.str.trim() || !item.transform) continue;
+    const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+    const fontH = Math.max(6, Math.hypot(tx[2], tx[3]));
+    const w = Math.max(4, Math.abs(item.width || 0) * state.scale);
+    const left = tx[4], top = tx[5] - fontH;
+    // Text boxes are slightly expanded so thin glyphs are still easy to select.
+    const padX = Math.max(3, fontH*0.12), padY = Math.max(3, fontH*0.18);
+    if(px >= left-padX && px <= left+w+padX && py >= top-padY && py <= top+fontH+padY){
+      const score = Math.abs(px-(left+w/2)) + Math.abs(py-(top+fontH/2));
+      if(score < bestScore){best=item;bestScore=score;}
+    }
+  }
+  if(!best){toast('Buraya tıklanabilir PDF metni bulunamadı. Taranmış/görsel PDF ise önce OCR gerekir.');return;}
+  const replacement = prompt('Seçilen yazı:\n'+best.str+'\n\nYeni yazıyı gir:', best.str);
+  if(replacement === null || replacement === best.str) return;
+  pushHistory();
+  const tx = pdfjsLib.Util.transform(viewport.transform, best.transform);
+  const fontH = Math.max(6, Math.hypot(tx[2], tx[3]));
+  const left = Math.max(0, tx[4]);
+  const top = Math.max(0, tx[5] - fontH*1.08);
+  const widthPx = Math.min(viewport.width-left, Math.max(fontH*0.55, Math.abs(best.width||0)*state.scale));
+  const heightPx = Math.min(viewport.height-top, fontH*1.35);
+  const box = {x1:left/viewport.width,y1:top/viewport.height,x2:(left+widthPx)/viewport.width,y2:(top+heightPx)/viewport.height};
+  // Whiteout hides the old glyphs visually. Original PDF text data may remain searchable.
+  state.items.push({type:'shape',pageNum:state.pageNum,kind:'rect',...box,fillColor:'#ffffff',strokeColor:'#ffffff',width:0,filled:true});
+  if(replacement.trim()) state.items.push({type:'text',pageNum:state.pageNum,x:box.x1,y:box.y1,text:replacement,font:'Helvetica',size:fontH/state.scale,bold:false,color:state.textColor||'#111111'});
+  redrawOverlay();
+  toast('Yazı görsel olarak değiştirildi. PDF Kaydet ile dışa aktar.');
+}
+
+drawCanvas.addEventListener('pointerdown', (e)=>{
+  if(!state.pdfDoc) return;
+  const p = getPos(e);
+
+  if(state.tool === 'replaceText'){
+    e.preventDefault();
+    replaceExistingPDFTextAt(p).catch(err=>{console.error(err);toast('Metin seçilemedi: '+err.message);});
+    return;
+  }
+
+  if(state.tool === 'select'){
+    const hit = hitTest(p);
+    if(hit){
+      drawCanvas.setPointerCapture(e.pointerId);
+      state.dragItem = hit;
+      state.dragOffset = { x: hit.x - p.x, y: hit.y - p.y };
+      drawCanvas.style.cursor = 'grabbing';
+      redrawOverlay();
+    }
+    return;
+  }
+
+  if(state.tool === 'pen'){
+    drawCanvas.setPointerCapture(e.pointerId);
+    pushHistory();
+    state.currentItem = { type:'stroke', pageNum:state.pageNum, color:state.penColor, width:state.penWidth, points:[p] };
+    state.items.push(state.currentItem);
+    redrawOverlay();
+  }
+  else if(state.tool === 'sign'){
+    drawCanvas.setPointerCapture(e.pointerId);
+    pushHistory();
+    state.currentItem = { type:'sign', pageNum:state.pageNum, color:state.signColor, width:state.signWidth, points:[p] };
+    state.items.push(state.currentItem);
+    redrawOverlay();
+  }
+  else if(state.tool === 'erase'){
+    drawCanvas.setPointerCapture(e.pointerId);
+    pushHistory();
+    state.currentItem = { type:'erase', pageNum:state.pageNum, size:state.eraserSize, points:[p] };
+    state.items.push(state.currentItem);
+    redrawOverlay();
+  }
+  else if(state.tool === 'text'){
+    e.preventDefault();
+    openTextInput(p);
+  }
+  else if(state.tool === 'note'){
+    e.preventDefault();
+    openNoteInput(p);
+  }
+  else if(state.tool === 'highlight' || state.tool === 'strike' || state.tool === 'underline'){
+    drawCanvas.setPointerCapture(e.pointerId);
+    pushHistory();
+    state.currentItem = {
+      type: state.tool, pageNum:state.pageNum,
+      x1:p.x, y1:p.y, x2:p.x, y2:p.y,
+      color: state.hlColor, opacity: state.hlOpacity, width: state.lineWidth,
+    };
+    state.items.push(state.currentItem);
+    redrawOverlay();
+  }
+  else if(state.tool === 'shape'){
+    drawCanvas.setPointerCapture(e.pointerId);
+    pushHistory();
+    state.currentItem = {
+      type:'shape', pageNum:state.pageNum, kind:state.shapeKind,
+      x1:p.x, y1:p.y, x2:p.x, y2:p.y,
+      fillColor:state.shapeFill, strokeColor:state.shapeStroke,
+      width:state.shapeWidth, filled:state.shapeFilled,
+    };
+    state.items.push(state.currentItem);
+    redrawOverlay();
+  }
+  else if(state.tool === 'stamp'){
+    pushHistory();
+    state.items.push({
+      type:'stamp', pageNum:state.pageNum,
+      x:p.x, y:p.y,
+      text:state.stampText, color:state.stampColor, size:state.stampSize,
+    });
+    redrawOverlay();
+  }
+  else if(state.tool === 'crop'){
+    drawCanvas.setPointerCapture(e.pointerId);
+    state.pendingCrop = { pageNum:state.pageNum, x1:p.x, y1:p.y, x2:p.x, y2:p.y };
+    redrawOverlay();
+  }
+  else if(state.tool === 'image'){
+    pickImageAt(p);
+  }
+  else if(state.tool === 'link'){
+    drawCanvas.setPointerCapture(e.pointerId);
+    state.currentItem = {
+      type:'link', pageNum:state.pageNum,
+      x1:p.x, y1:p.y, x2:p.x, y2:p.y,
+    };
+    redrawOverlay();
+  }
+});
+
+function releaseCapture(e){
+  if(e && drawCanvas.hasPointerCapture && drawCanvas.hasPointerCapture(e.pointerId)){
+    try{ drawCanvas.releasePointerCapture(e.pointerId); }catch(_){}
+  }
+}
+
+drawCanvas.addEventListener('pointermove', (e)=>{
+  const p = getPos(e);
+
+  if(state.dragItem){
+    if('x' in state.dragItem && 'y' in state.dragItem){
+      state.dragItem.x = p.x + state.dragOffset.x;
+      state.dragItem.y = p.y + state.dragOffset.y;
+      redrawOverlay();
+    }
+    return;
+  }
+
+  if(!state.currentItem && !state.pendingCrop) return;
+  const it = state.currentItem;
+  if(it){
+    if(it.type === 'stroke' || it.type === 'sign' || it.type === 'erase'){
+      it.points.push(p);
+    } else if(it.type === 'shape' || it.type === 'highlight' || it.type === 'strike' || it.type === 'underline' || it.type === 'link'){
+      it.x2 = p.x; it.y2 = p.y;
+    }
+  }
+  if(state.pendingCrop){
+    state.pendingCrop.x2 = p.x;
+    state.pendingCrop.y2 = p.y;
+  }
+  redrawOverlay();
+});
+
+function endStroke(e){
+  if(state.dragItem){
+    state.dragItem = null; state.dragOffset = null;
+    drawCanvas.style.cursor = '';
+  }
+  if(state.pendingCrop){
+    const c = state.pendingCrop;
+    const dx = Math.abs(c.x2-c.x1), dy = Math.abs(c.y2-c.y1);
+    if(dx > 0.02 && dy > 0.02){
+      pushHistory();
+      state.cropBoxes[c.pageNum] = { x: Math.min(c.x1,c.x2), y: Math.min(c.y1,c.y2), w: dx, h: dy };
+      toast('Sayfa kırpıldı.');
+      setStatus('Kırpma uygulandı');
+      renderPage();
+    }
+    state.pendingCrop = null;
+  }
+  if(state.currentItem && state.currentItem.type === 'link'){
+    const it = state.currentItem;
+    const dx = Math.abs(it.x2-it.x1), dy = Math.abs(it.y2-it.y1);
+    if(dx > 0.01 && dy > 0.01){
+      let url = (state.linkDraft || '').trim();
+      if(!url) url = prompt('Bağlantı adresi (URL):') || '';
+      if(url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+      if(url){
+        pushHistory();
+        state.items.push({
+          type:'link', pageNum:state.pageNum,
+          x: Math.min(it.x1, it.x2),
+          y: Math.min(it.y1, it.y2),
+          w: dx, h: dy,
+          url: url,
+        });
+        toast('Bağlantı eklendi (kaydedince tıklanabilir olur)');
+      }
+    }
+  }
+  releaseCapture(e);
+  state.currentItem = null;
+  redrawOverlay();
+}
+drawCanvas.addEventListener('pointerup', endStroke);
+drawCanvas.addEventListener('pointercancel', endStroke);
+
+/* ---- metin girişi ---- */
+function openTextInput(p){
+  const existing = document.querySelector('.text-input');
+  if(existing) existing.blur();
+  const wrap = $('pageWrap');
+  const r = drawCanvas.getBoundingClientRect();
+  const wrapRect = wrap.getBoundingClientRect();
+  const ta = document.createElement('textarea');
+  ta.className = 'text-input';
+  ta.style.left = (r.left - wrapRect.left + p.x*r.width) + 'px';
+  ta.style.top  = (r.top  - wrapRect.top  + p.y*r.height) + 'px';
+  ta.style.fontSize   = Math.max(12, Math.round(state.textSize * (r.width/612))) + 'px';
+  ta.style.fontFamily = state.textFont;
+  ta.style.color      = state.textColor;
+  ta.style.fontWeight = state.textBold ? 'bold' : 'normal';
+  ta.rows = 1;
+  wrap.appendChild(ta);
+  drawCanvas.style.pointerEvents = 'none';
+  let committed = false;
+  const commit = ()=>{
+    if(committed) return; committed = true;
+    const val = ta.value;
+    if(val && val.trim()){
+      pushHistory();
+      state.items.push({
+        type:'text', pageNum:state.pageNum,
+        x:p.x, y:p.y, text:val,
+        size:state.textSize, font:state.textFont, color:state.textColor, bold:state.textBold,
+      });
+    }
+    ta.remove();
+    drawCanvas.style.pointerEvents = '';
+    redrawOverlay();
+  };
+  setTimeout(()=>ta.focus(), 0);
+  ta.addEventListener('blur', commit);
+  ta.addEventListener('keydown', ev=>{
+    if(ev.key === 'Enter' && !ev.shiftKey){ ev.preventDefault(); ta.blur(); }
+    if(ev.key === 'Escape'){ ta.value = ''; ta.blur(); }
+  });
+}
+
+/* ---- not girişi ---- */
+function openNoteInput(p){
+  const existing = document.querySelector('.note-input');
+  if(existing) existing.blur();
+  const wrap = $('pageWrap');
+  const r = drawCanvas.getBoundingClientRect();
+  const wrapRect = wrap.getBoundingClientRect();
+  const ta = document.createElement('textarea');
+  ta.className = 'note-input';
+  ta.style.left = (r.left - wrapRect.left + p.x*r.width) + 'px';
+  ta.style.top  = (r.top  - wrapRect.top  + p.y*r.height) + 'px';
+  ta.style.background = state.noteBg;
+  ta.style.color = state.noteFg;
+  ta.placeholder = 'Notunu yaz...';
+  wrap.appendChild(ta);
+  drawCanvas.style.pointerEvents = 'none';
+  let committed = false;
+  const commit = ()=>{
+    if(committed) return; committed = true;
+    const val = ta.value;
+    if(val && val.trim()){
+      const wr = ta.getBoundingClientRect();
+      const wNorm = wr.width / r.width;
+      const hNorm = wr.height / r.height;
+      pushHistory();
+      state.items.push({
+        type:'note', pageNum:state.pageNum,
+        x:p.x, y:p.y, w:wNorm, h:hNorm,
+        text:val, bg:state.noteBg, fg:state.noteFg,
+      });
+    }
+    ta.remove();
+    drawCanvas.style.pointerEvents = '';
+    redrawOverlay();
+  };
+  setTimeout(()=>ta.focus(), 0);
+  ta.addEventListener('blur', commit);
+  ta.addEventListener('keydown', ev=>{
+    if(ev.key === 'Escape'){ ta.value = ''; ta.blur(); }
+  });
+}
+
+/* ---- görsel ekle ---- */
+function pickImageAt(p){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = ()=>{
+    const f = input.files && input.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const wNorm = state.imageWidth / 612;
+        const hNorm = (state.imageWidth * (img.height/img.width)) / 612;
+        pushHistory();
+        state.items.push({
+          type:'image', pageNum:state.pageNum,
+          x: p.x, y: p.y,
+          w: wNorm, h: hNorm,
+          imgEl: img,
+          dataUrl: reader.result,
+        });
+        redrawOverlay();
+        toast('Görsel eklendi');
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(f);
+  };
+  input.click();
+}
+
+/* ---- Arama ---- */
+function toggleSearch(){
+  const p = $('searchPanel');
+  const willShow = !p.classList.contains('show');
+  p.classList.toggle('show', willShow);
+  state.searchActive = willShow;
+  if(willShow){
+    setTimeout(()=>$('searchInput').focus(), 0);
+    if(!state.searchQuery){ $('searchResults').innerHTML = ''; }
+    else doSearch();
+  } else {
+    redrawOverlay();
+  }
+}
+
+async function doSearch(){
+  const q = ($('searchInput').value || '').trim();
+  state.searchQuery = q;
+  const resultsEl = $('searchResults');
+  if(!q || !state.pdfDoc){
+    state.searchAllResults = [];
+    resultsEl.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:6px;">En az 2 karakter yaz.</div>';
+    redrawOverlay();
+    return;
+  }
+  resultsEl.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:6px;">Aranıyor...</div>';
+  const found = [];
+  for(let n=1; n<=state.pdfDoc.numPages; n++){
+    try{
+      const page = await state.pdfDoc.getPage(n);
+      const textContent = await page.getTextContent();
+      const rot = (page.rotate||0) + (state.pageRotations[n]||0);
+      const vp1 = page.getViewport({ scale: 1, rotation: rot });
+      for(const item of textContent.items){
+        const str = (item.str || '');
+        const idx = str.toLowerCase().indexOf(q.toLowerCase());
+        if(idx >= 0){
+          const tx = pdfjsLib.Util.transform(vp1.transform, item.transform);
+          const xPt = tx[4];
+          const yPt = tx[5];
+          const nx = xPt / vp1.width;
+          const nyTop = (vp1.height - yPt) / vp1.height - (item.height / vp1.height);
+          const nw = (item.width) / vp1.width;
+          const nh = (item.height) / vp1.height;
+          found.push({
+            pageNum: n,
+            text: str,
+            snip: str.slice(Math.max(0,idx-20), idx+40),
+            x: Math.max(0, Math.min(1, nx)),
+            y: Math.max(0, Math.min(1, nyTop)),
+            w: Math.max(0.005, Math.min(1, nw)),
+            h: Math.max(0.005, Math.min(1, nh)),
+          });
+        }
+      }
+    }catch(_){}
+  }
+  // OCR ile daha önce tanınmış taranmış sayfalardaki metinleri de ara.
+  for(const [pageKey, textValue] of Object.entries(state.ocrTexts)){
+    const n = Number(pageKey);
+    const lines = String(textValue || '').split(/\n+/);
+    for(const line of lines){
+      const idx = line.toLocaleLowerCase('tr').indexOf(q.toLocaleLowerCase('tr'));
+      if(idx >= 0) found.push({pageNum:n,text:line.trim(),snip:line.trim().slice(Math.max(0,idx-20),idx+40),ocr:true,x:0,y:0,w:0,h:0});
+    }
+  }
+  state.searchAllResults = found;
+
+  if(found.length === 0){
+    resultsEl.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:6px;">Sonuç bulunamadı.</div>';
+  } else {
+    resultsEl.innerHTML = '';
+    found.slice(0, 80).forEach(r=>{
+      const div = document.createElement('button');
+      div.className = 'search-result';
+      div.innerHTML = `<span class="pg">Sayfa ${r.pageNum}${r.ocr?' · OCR':''}</span> — ${escapeHtml(r.text.slice(0,40))}<span class="snip">${escapeHtml(r.snip)}</span>`;
+      div.addEventListener('click', async ()=>{
+        if(state.pageNum !== r.pageNum){ state.pageNum = r.pageNum; await renderPage(); }
+        redrawOverlay();
+      });
+      resultsEl.appendChild(div);
+    });
+    const firstPage = found[0].pageNum;
+    if(state.pageNum !== firstPage){ state.pageNum = firstPage; await renderPage(); }
+  }
+  redrawOverlay();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+/* ---- OCR: taranmış PDF'lerden metin tanıma ---- */
+function toggleOCRPanel(){
+  const panel=$('ocrPanel');
+  panel.style.display=panel.style.display==='block'?'none':'block';
+  if(panel.style.display==='block' && !state.pdfDoc) $('ocrProgress').textContent='Önce bir PDF aç.';
+}
+async function ensureTesseract(){
+  if(window.Tesseract) return window.Tesseract;
+  $('ocrProgress').textContent='OCR motoru yükleniyor...';
+  await new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    script.onload=resolve; script.onerror=()=>reject(new Error('Tesseract.js indirilemedi. İnternet bağlantını kontrol et.'));
+    document.head.appendChild(script);
+  });
+  return window.Tesseract;
+}
+async function runOCR(allPages){
+  if(!state.pdfDoc){toast('Önce bir PDF aç');return;}
+  if(state.ocrBusy){toast('OCR zaten çalışıyor');return;}
+  state.ocrBusy=true; $('ocrPanel').style.display='block'; showLoading(true);
+  try{
+    const Tesseract=await ensureTesseract();
+    const worker=await Tesseract.createWorker('tur+eng', 1, {logger:m=>{
+      if(m.status){const pct=typeof m.progress==='number'?' '+Math.round(m.progress*100)+'%':'';$('ocrProgress').textContent='OCR motoru: '+m.status+pct;}
+    }});
+    const start=allPages?1:state.pageNum, end=allPages?state.pdfDoc.numPages:state.pageNum;
+    for(let n=start;n<=end;n++){
+      if(!allPages && state.ocrTexts[n]){ $('ocrText').value=state.ocrTexts[n]; $('ocrProgress').textContent='Bu sayfanın OCR metni zaten mevcut.'; continue; }
+      $('ocrProgress').textContent=`Sayfa ${n}/${end} görüntüleniyor...`;
+      const page=await state.pdfDoc.getPage(n);
+      const viewport=page.getViewport({scale:2.2,rotation:(page.rotate||0)+(state.pageRotations[n]||0)});
+      const canvas=document.createElement('canvas'); canvas.width=Math.ceil(viewport.width); canvas.height=Math.ceil(viewport.height);
+      await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+      $('ocrProgress').textContent=`Sayfa ${n}/${end}: metin tanınıyor...`;
+      const result=await worker.recognize(canvas);
+      state.ocrTexts[n]=(result.data.text||'').trim();
+      state.ocrData[n]={words:(result.data.words||[]).map(w=>({text:w.text,bbox:w.bbox})),canvasWidth:canvas.width,canvasHeight:canvas.height,rotation:(page.rotate||0)+(state.pageRotations[n]||0)};
+      canvas.width=canvas.height=1;
+      $('ocrText').value=Object.keys(state.ocrTexts).map(k=>`--- Sayfa ${k} ---\n${state.ocrTexts[k]}`).join('\n\n');
+      $('ocrProgress').textContent=`OCR tamamlanıyor: sayfa ${n}/${end}`;
+    }
+    await worker.terminate();
+    $('ocrText').value=Object.keys(state.ocrTexts).sort((a,b)=>Number(a)-Number(b)).map(k=>`--- Sayfa ${k} ---\n${state.ocrTexts[k]}`).join('\n\n');
+    $('ocrProgress').textContent=`Tamamlandı. ${Object.keys(state.ocrTexts).length} sayfanın OCR metni hazır. Metin uygulama içi aramada da bulunur.`;
+    toast('OCR tamamlandı ✅');
+  }catch(err){console.error(err);$('ocrProgress').textContent='OCR hatası: '+err.message;toast('OCR çalışmadı: '+err.message);}
+  finally{state.ocrBusy=false;showLoading(false);}
+}
+function downloadOCRText(){
+  const keys=Object.keys(state.ocrTexts).sort((a,b)=>Number(a)-Number(b));
+  if(!keys.length){toast('Önce OCR çalıştır');return;}
+  const text=keys.map(k=>`--- Sayfa ${k} ---\n${state.ocrTexts[k]}`).join('\n\n');
+  const blob=new Blob([text],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(state.fileName||'belge')+'-ocr.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+
+
+/* ---- Araç Merkezi: dosya işlemleri (istemci tarafında) ---- */
+function toggleAdvanced(){
+  const p=$('advancedPanel'); p.style.display=p.style.display==='block'?'none':'block';
+  if(p.style.display==='block' && !state.pdfDoc) toast('Önce PDF aç; birleştirme için PDF açık olması gerekmez.');
+}
+function downloadBytes(bytes, filename, type='application/pdf'){
+  const blob=new Blob([bytes],{type}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+function parsePageRanges(input,total){
+  const set=new Set();
+  for(const part of input.split(',').map(x=>x.trim()).filter(Boolean)){
+    const m=part.match(/^(\d+)\s*-\s*(\d+)$/);
+    if(m){let a=+m[1],b=+m[2];if(a>b)[a,b]=[b,a];for(let n=a;n<=b;n++){if(n<1||n>total)throw Error('Sayfa aralığı 1-'+total+' arasında olmalı.');set.add(n-1);}}
+    else if(/^\d+$/.test(part)){const n=+part;if(n<1||n>total)throw Error('Sayfa aralığı 1-'+total+' arasında olmalı.');set.add(n-1);}
+    else throw Error('Aralık biçimi yanlış. Örnek: 1-3,5');
+  }
+  return [...set].sort((a,b)=>a-b);
+}
+async function mergePDFs(){
+  const files=[...($('mergeFiles').files||[])]; if(!files.length){toast('Birleştirmek için en az bir PDF seç');return;}
+  showLoading(true);
+  try{
+    const out=await PDFLib.PDFDocument.create();
+    for(const file of files){const src=await PDFLib.PDFDocument.load(await file.arrayBuffer());const copied=await out.copyPages(src,src.getPageIndices());copied.forEach(p=>out.addPage(p));}
+    downloadBytes(await out.save(), 'pdf-studio-birlestirilmis.pdf');toast(files.length+' PDF birleştirildi ✅');
+  }catch(e){toast('Birleştirme hatası: '+e.message);}finally{showLoading(false);}
+}
+async function splitPDFRange(){
+  if(!state.loadedBytes){toast('Önce PDF aç');return;}showLoading(true);
+  try{
+    const src=await PDFLib.PDFDocument.load(state.loadedBytes);const ids=parsePageRanges($('pageRange').value,src.getPageCount());
+    if(!ids.length)throw Error('Sayfa aralığı gir.');const out=await PDFLib.PDFDocument.create();
+    (await out.copyPages(src,ids)).forEach(p=>out.addPage(p));
+    downloadBytes(await out.save(),(state.fileName||'belge')+'-ayrilan-sayfalar.pdf');toast('Sayfalar ayrıldı ✅');
+  }catch(e){toast('Ayırma hatası: '+e.message);}finally{showLoading(false);}
+}
+async function reorderPDFPages(){
+  if(!state.loadedBytes){toast('Önce PDF aç');return;}showLoading(true);
+  try{
+    const src=await PDFLib.PDFDocument.load(state.loadedBytes);const raw=$('pageOrder').value.trim();
+    if(!raw)throw Error('Sıralamayı gir. Örnek: 3,1,2,4');
+    const ids=raw.split(',').map(x=>Number(x.trim())-1);
+    if(ids.some(n=>!Number.isInteger(n)||n<0||n>=src.getPageCount()))throw Error('Sıralamadaki sayfa numarası geçersiz.');
+    const out=await PDFLib.PDFDocument.create();(await out.copyPages(src,ids)).forEach(p=>out.addPage(p));
+    downloadBytes(await out.save(),(state.fileName||'belge')+'-siralanmis.pdf');toast('Sıralanmış PDF hazır ✅');
+  }catch(e){toast('Sıralama hatası: '+e.message);}finally{showLoading(false);}
+}
+async function rasterizeDocument({quality=.65,scale=1.35,redact=null}={}){
+  if(!state.pdfDoc)throw Error('Önce PDF aç.');
+  const out=await PDFLib.PDFDocument.create();
+  for(let n=1;n<=state.pdfDoc.numPages;n++){
+    $('statusText').textContent=`Sayfa görselleştiriliyor ${n}/${state.pdfDoc.numPages}…`;
+    const page=await state.pdfDoc.getPage(n), vp=page.getViewport({scale,rotation:(page.rotate||0)+(state.pageRotations[n]||0)});
+    const canvas=document.createElement('canvas');canvas.width=Math.ceil(vp.width);canvas.height=Math.ceil(vp.height);
+    const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    await page.render({canvasContext:ctx,viewport:vp}).promise;
+    if(redact && n===redact.page){
+      ctx.fillStyle='#000';ctx.fillRect(canvas.width*redact.x/100,canvas.height*redact.y/100,canvas.width*redact.w/100,canvas.height*redact.h/100);
+    }
+    const data=canvas.toDataURL('image/jpeg',quality);const jpg=await out.embedJpg(data);
+    const p=out.addPage([vp.width/scale,vp.height/scale]);p.drawImage(jpg,{x:0,y:0,width:vp.width/scale,height:vp.height/scale});
+    canvas.width=canvas.height=1;
+  }
+  return out.save();
+}
+async function compressPDF(){
+  if(!state.pdfDoc){toast('Önce PDF aç');return;}
+  if(!confirm('Bu işlem sayfaları JPEG görsellerine dönüştürür. Metin seçimi, bağlantılar ve vektör kalitesi kaybolabilir. Devam?'))return;
+  showLoading(true);
+  try{const bytes=await rasterizeDocument({quality:.58,scale:1.2});downloadBytes(bytes,(state.fileName||'belge')+'-sikistirilmis.pdf');toast('Görsel tabanlı PDF oluşturuldu. Boyut her dosyada küçülmeyebilir.');}
+  catch(e){toast('Sıkıştırma hatası: '+e.message);}finally{showLoading(false);$('statusText').textContent='Hazır';}
+}
+async function exportSearchableOCRPDF(){
+  if(!state.loadedBytes){toast('Önce PDF aç');return;}
+  if(!Object.keys(state.ocrData).length){toast('Önce OCR panelinden Bu sayfa veya Tüm PDF işlemini çalıştır.');return;}
+  showLoading(true);
+  try{
+    const doc=await PDFLib.PDFDocument.load(state.loadedBytes);const pages=doc.getPages();const font=await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+    let count=0;
+    for(const [key,data] of Object.entries(state.ocrData)){
+      const p=pages[Number(key)-1];if(!p||!data.canvasWidth||!data.canvasHeight)continue;
+      const {width,height}=p.getSize();
+      for(const w of data.words){
+        const text=String(w.text||'').trim();if(!text)continue;
+        const b=w.bbox||{};const x=(b.x0||0)/data.canvasWidth*width;
+        const y=height-(b.y1||0)/data.canvasHeight*height;
+        const fs=Math.max(4,Math.min(30,((b.y1||0)-(b.y0||0))/data.canvasHeight*height));
+        try{p.drawText(text,{x,y,size:fs,font,opacity:0});count++;}catch(_){}
+      }
+    }
+    if(!count)throw Error('OCR kelimeleri bulunamadı. OCR işlemini yeniden çalıştır.');
+    downloadBytes(await doc.save(),(state.fileName||'belge')+'-aranabilir.pdf');
+    toast('OCR metin katmanı eklendi. Görünmez katman PDF okuyucularına göre farklı davranabilir.');
+  }catch(e){toast('OCR PDF hatası: '+e.message);}finally{showLoading(false);}
+}
+async function exportCurrentPagePNG(){
+  if(!state.pdfDoc){toast('Önce PDF aç');return;}
+  try{
+    const p=await state.pdfDoc.getPage(state.pageNum),vp=p.getViewport({scale:2,rotation:(p.rotate||0)+(state.pageRotations[state.pageNum]||0)});
+    const c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);
+    await p.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=(state.fileName||'belge')+'-sayfa-'+state.pageNum+'.png';a.click();c.width=c.height=1;
+  }catch(e){toast('PNG dışa aktarma hatası: '+e.message);}
+}
+function addFormText(){
+  if(!state.pdfDoc){toast('Önce PDF aç');return;}
+  const text=prompt('Eklenecek form cevabı / metin:');if(!text)return;
+  const x=Number(prompt('Yatay konum yüzde (0-100), varsayılan 10:','10'));
+  const y=Number(prompt('Dikey konum yüzde (0-100), üstten, varsayılan 20:','20'));
+  if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>100||y<0||y>100){toast('Konum 0-100 arasında olmalı.');return;}
+  pushHistory();state.items.push({type:'text',pageNum:state.pageNum,x:x/100,y:y/100,text,font:'Helvetica',size:14,color:'#111111',bold:false});
+  redrawOverlay();toast('Metin eklendi. PDF Kaydet ile dışa aktar.');
+}
+async function secureRedactPDF(){
+  if(!state.pdfDoc){toast('Önce PDF aç');return;}
+  const page=Number(prompt('Sansürlenecek sayfa numarası: ',String(state.pageNum)));
+  const x=Number(prompt('Alan sol konumu yüzde (0-100), ör. 10:','10'));
+  const y=Number(prompt('Alan üst konumu yüzde (0-100), ör. 20:','20'));
+  const w=Number(prompt('Alan genişliği yüzde (0-100), ör. 30:','30'));
+  const h=Number(prompt('Alan yüksekliği yüzde (0-100), ör. 5:','5'));
+  if(!Number.isInteger(page)||page<1||page>state.pdfDoc.numPages||![x,y,w,h].every(Number.isFinite)||x<0||y<0||w<=0||h<=0||x+w>100||y+h>100){toast('Sayfa veya alan ölçüleri geçersiz.');return;}
+  if(!confirm('GERÇEK SANSÜR: tüm PDF sayfaları görsele dönüştürülecek; seçilen alan siyah kapatılacak ve alttaki metin katmanı kaldırılacak. Devam?'))return;
+  showLoading(true);
+  try{const bytes=await rasterizeDocument({quality:.92,scale:2,redact:{page,x,y,w,h}});downloadBytes(bytes,(state.fileName||'belge')+'-sansurlenmis.pdf');toast('Düzleştirilmiş sansürlü PDF hazır. Alanı kontrol etmeden paylaşma.');}
+  catch(e){toast('Sansürleme hatası: '+e.message);}finally{showLoading(false);$('statusText').textContent='Hazır';}
+}
+
+/* ---- Sayfa numarası ---- */
+function addPageNumbers(){
+  if(!state.pdfDoc){ toast('Önce bir PDF aç'); return; }
+  const total = state.pdfDoc.numPages;
+  const { pos, format, size, color } = state.pageNumberConfig;
+  const textFor = (n)=> format.replace(/\{n\}/g, String(n)).replace(/\{total\}/g, String(total));
+
+  pushHistory();
+  let added = 0;
+  for(let n=1; n<=total; n++){
+    const exists = state.items.some(it=>it.pageNum === n && it.type === 'pagenum');
+    if(exists) continue;
+    state.items.push({
+      type: 'pagenum', pageNum: n,
+      pos, text: textFor(n), size, color,
+    });
+    added++;
+  }
+  redrawOverlay();
+  toast(added ? `Sayfa numaraları eklendi (${added} sayfa).` : 'Zaten sayfa numaraları var.');
+}
+
+/* ---- zoom / sayfa / döndür / sil ---- */
+function zoomIn(){ state.scale = Math.min(state.scale+0.25, 4); renderPage(); }
+function zoomOut(){ state.scale = Math.max(state.scale-0.25, 0.5); renderPage(); }
+async function prevPage(){ if(state.pageNum>1){ state.pageNum--; await renderPage(); } }
+async function nextPage(){ if(state.pdfDoc && state.pageNum<state.pdfDoc.numPages){ state.pageNum++; await renderPage(); } }
+
+async function rotatePage(){
+  if(!state.pdfDoc) return;
+  const cur = state.pageRotations[state.pageNum] || 0;
+  state.pageRotations[state.pageNum] = (cur + 90) % 360;
+  await renderPage();
+  toast('Sayfa döndürüldü: ' + state.pageRotations[state.pageNum] + '°');
+}
+
+async function deletePage(){
+  if(!state.pdfDoc) return;
+  if(state.pdfDoc.numPages <= 1){ toast('Son sayfa silinemez'); return; }
+  if(!confirm(`Sayfa ${state.pageNum} silinsin mi?`)) return;
+  showLoading(true);
+  try{
+    const { PDFDocument } = PDFLib;
+    const src = await PDFDocument.load(state.loadedBytes);
+    src.removePage(state.pageNum - 1);
+    const out = await src.save();
+    state.loadedBytes = out;
+    state.pdfDoc = await pdfjsLib.getDocument({ data: state.loadedBytes.slice() }).promise;
+
+    state.items = state.items.filter(it=>it.pageNum !== state.pageNum).map(it=>{
+      if(it.pageNum > state.pageNum) it.pageNum -= 1;
+      return it;
+    });
+    const newRot = {}, newCrop = {};
+    for(const k of Object.keys(state.pageRotations)){
+      const n = parseInt(k);
+      if(n === state.pageNum) continue;
+      newRot[n > state.pageNum ? n-1 : n] = state.pageRotations[k];
+    }
+    for(const k of Object.keys(state.cropBoxes)){
+      const n = parseInt(k);
+      if(n === state.pageNum) continue;
+      newCrop[n > state.pageNum ? n-1 : n] = state.cropBoxes[k];
+    }
+    state.pageRotations = newRot; state.cropBoxes = newCrop;
+
+    if(state.pageNum > state.pdfDoc.numPages) state.pageNum = state.pdfDoc.numPages;
+    state.history = [];
+    await renderPage();
+    toast('Sayfa silindi');
+  }catch(err){ toast('Silme hatası: ' + err.message); }
+  finally{ showLoading(false); }
+}
+
+function clearPage(){
+  if(!state.pdfDoc) return;
+  pushHistory();
+  state.items = state.items.filter(it=>it.pageNum !== state.pageNum);
+  redrawOverlay(); toast('Bu sayfadaki tüm eklemeler temizlendi (döndürme/kırpma korunur)');
+}
+
+/* ---- export ---- */
+function hexToRgb01(hex){
+  const h = hex.replace('#','');
+  const n = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+  return { r:((n>>16)&255)/255, g:((n>>8)&255)/255, b:(n&255)/255 };
+}
+
+function dataUrlToUint8(dataUrl){
+  const base64 = dataUrl.split(',')[1];
+  const bin = atob(base64);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+async function exportPDF(){
+  if(!state.pdfDoc || !state.loadedBytes){ toast('Önce bir PDF aç'); return; }
+  setStatus('Kaydediliyor...'); showLoading(true);
+  try{
+    const { PDFDocument, rgb, StandardFonts, degrees, PDFString, PDFName, PDFArray } = PDFLib;
+    let pdfDoc = await PDFDocument.load(state.loadedBytes);
+
+    const pages = pdfDoc.getPages();
+    for(const k of Object.keys(state.pageRotations)){
+      const n = parseInt(k);
+      const p = pages[n-1];
+      if(p){
+        const base = p.getRotation().angle || 0;
+        p.setRotation(degrees((base + state.pageRotations[k]) % 360));
+      }
+    }
+
+    const fontCache = {};
+    const getFont = async (name, bold)=>{
+      const key = name + (bold?'-b':'');
+      if(fontCache[key]) return fontCache[key];
+      let fname = StandardFonts.Helvetica;
+      if(name === 'Times-Roman') fname = StandardFonts.TimesRoman;
+      else if(name === 'Courier') fname = StandardFonts.Courier;
+      let f = await pdfDoc.embedFont(fname);
+      if(bold){
+        let bname = fname;
+        if(fname === StandardFonts.Helvetica) bname = StandardFonts.HelveticaBold;
+        else if(fname === StandardFonts.TimesRoman) bname = StandardFonts.TimesRomanBold;
+        else if(fname === StandardFonts.Courier) bname = StandardFonts.CourierBold;
+        f = await pdfDoc.embedFont(bname);
+      }
+      fontCache[key] = f;
+      return f;
+    };
+
+    for(const it of state.items){
+      const page = pages[it.pageNum - 1];
+      if(!page) continue;
+      const { width, height } = page.getSize();
+
+      if(it.type === 'stroke' || it.type === 'sign'){
+        const c = hexToRgb01(it.color);
+        for(let i=1;i<it.points.length;i++){
+          const a = it.points[i-1], b = it.points[i];
+          page.drawLine({ start:{ x:a.x*width, y:(1-a.y)*height }, end:{ x:b.x*width, y:(1-b.y)*height }, thickness: it.width, color: rgb(c.r,c.g,c.b) });
+        }
+      }
+      else if(it.type === 'erase'){
+        for(let i=1;i<it.points.length;i++){
+          const a = it.points[i-1], b = it.points[i];
+          page.drawLine({ start:{ x:a.x*width, y:(1-a.y)*height }, end:{ x:b.x*width, y:(1-b.y)*height }, thickness: it.size, color: rgb(1,1,1) });
+        }
+      }
+      else if(it.type === 'text'){
+        const font = await getFont(it.font, it.bold);
+        const c = hexToRgb01(it.color);
+        const lines = String(it.text).split('\n');
+        let ty = (1-it.y)*height - it.size;
+        for(const line of lines){
+          page.drawText(line, { x: it.x*width, y: ty, size: it.size, font, color: rgb(c.r,c.g,c.b) });
+          ty -= it.size * 1.2;
+        }
+      }
+      else if(it.type === 'highlight'){
+        const c = hexToRgb01(it.color);
+        const w = Math.abs(it.x2-it.x1)*width;
+        const h = Math.abs(it.y2-it.y1)*height;
+        page.drawRectangle({ x: Math.min(it.x1,it.x2)*width, y: (1-Math.max(it.y1,it.y2))*height, width: w, height: h, color: rgb(c.r,c.g,c.b), opacity: it.opacity/100, borderWidth: 0 });
+      }
+      else if(it.type === 'strike' || it.type === 'underline'){
+        const c = hexToRgb01(it.color);
+        const x1 = it.x1*width, x2 = it.x2*width;
+        const yRef = it.type === 'strike' ? (1 - (it.y1+it.y2)/2) * height : (1 - Math.max(it.y1,it.y2)) * height;
+        page.drawLine({ start: { x: Math.min(x1,x2), y: yRef }, end: { x: Math.max(x1,x2), y: yRef }, thickness: it.width, color: rgb(c.r,c.g,c.b) });
+      }
+      else if(it.type === 'shape'){
+        const x1=it.x1*width, y1=(1-it.y1)*height;
+        const x2=it.x2*width, y2=(1-it.y2)*height;
+        const minX = Math.min(x1,x2), maxX = Math.max(x1,x2);
+        const minY = Math.min(y1,y2), maxY = Math.max(y1,y2);
+        const fc = hexToRgb01(it.fillColor), sc = hexToRgb01(it.strokeColor);
+        const lw = it.width;
+        const drawOpts = { borderColor: rgb(sc.r,sc.g,sc.b), borderWidth: lw, color: it.filled ? rgb(fc.r,fc.g,fc.b) : undefined };
+        if(it.kind === 'rect'){ page.drawRectangle({ x:minX, y:minY, width:maxX-minX, height:maxY-minY, ...drawOpts }); }
+        else if(it.kind === 'circle'){ page.drawEllipse({ x:(x1+x2)/2, y:(y1+y2)/2, xScale:(maxX-minX)/2, yScale:(maxY-minY)/2, ...drawOpts }); }
+        else if(it.kind === 'line'){ page.drawLine({ start:{x:x1,y:y1}, end:{x:x2,y:y2}, thickness:lw||1, color: rgb(sc.r,sc.g,sc.b) }); }
+        else if(it.kind === 'arrow'){ page.drawLine({ start:{x:x1,y:y1}, end:{x:x2,y:y2}, thickness:lw||1, color: rgb(sc.r,sc.g,sc.b) }); const ang = Math.atan2(y2-y1, x2-x1); const head = Math.max(8, lw*3); const p1x = x2 - head*Math.cos(ang-0.4), p1y = y2 - head*Math.sin(ang-0.4); const p2x = x2 - head*Math.cos(ang+0.4), p2y = y2 - head*Math.sin(ang+0.4); page.drawLine({ start:{x:x2,y:y2}, end:{x:p1x,y:p1y}, thickness:lw||1, color: rgb(sc.r,sc.g,sc.b) }); page.drawLine({ start:{x:x2,y:y2}, end:{x:p2x,y:p2y}, thickness:lw||1, color: rgb(sc.r,sc.g,sc.b) }); }
+        else if(it.kind === 'triangle'){ const tri = [{x:(x1+x2)/2, y:y1},{x:x2, y:y2},{x:x1, y:y2}]; for(let i=0;i<3;i++){ const a = tri[i], b = tri[(i+1)%3]; page.drawLine({ start:a, end:b, thickness:lw||1, color: rgb(sc.r,sc.g,sc.b) }); } }
+        else if(it.kind === 'star'){ const cx=(x1+x2)/2, cy=(y1+y2)/2; const R=Math.min(Math.abs(x2-x1),Math.abs(y2-y1))/2; const r=R*0.45; const pts=[]; for(let i=0;i<10;i++){ const ang=-Math.PI/2 + i*Math.PI/5; const rad=i%2===0?R:r; pts.push({x:cx+rad*Math.cos(ang), y:cy+rad*Math.sin(ang)}); } for(let i=0;i<pts.length;i++){ const a=pts[i], b=pts[(i+1)%pts.length]; page.drawLine({ start:a, end:b, thickness:lw||1, color: rgb(sc.r,sc.g,sc.b) }); } }
+      }
+      else if(it.type === 'note'){
+        const bg = hexToRgb01(it.bg);
+        page.drawRectangle({ x: it.x*width, y: (1-it.y-it.h)*height, width: it.w*width, height: it.h*height, color: rgb(bg.r,bg.g,bg.b), borderColor: rgb(0.96,0.62,0.04), borderWidth: 1.5 });
+        const font = await getFont('Helvetica', false);
+        const fg = hexToRgb01(it.fg);
+        const lines = String(it.text).split('\n');
+        let ty = (1-it.y)*height - 16;
+        for(const line of lines){
+          if(ty < (1-it.y-it.h)*height) break;
+          page.drawText(line, { x: it.x*width + 6, y: ty, size: 11, font, color: rgb(fg.r,fg.g,fg.b) });
+          ty -= 13;
+        }
+      }
+      else if(it.type === 'stamp'){
+        const font = await getFont('Helvetica', true);
+        const c = hexToRgb01(it.color);
+        const textW = font.widthOfTextAtSize(it.text, it.size);
+        const cx = it.x*width;
+        const cy = (1-it.y)*height;
+        page.drawText(it.text, {
+          x: cx - textW/2,
+          y: cy - it.size/2,
+          size: it.size,
+          font,
+          color: rgb(c.r,c.g,c.b),
+          opacity: 0.85,
+          rotate: degrees(-15),
+        });
+      }
+      else if(it.type === 'image'){
+        if(it.dataUrl){
+          try{
+            const bytes = dataUrlToUint8(it.dataUrl);
+            let img;
+            if(it.dataUrl.startsWith('data:image/png')) img = await pdfDoc.embedPng(bytes);
+            else if(it.dataUrl.startsWith('data:image/jpeg')) img = await pdfDoc.embedJpg(bytes);
+            else { console.warn('Desteklenmeyen görsel formatı:', it.dataUrl.slice(0,30)); }
+            if(img){
+              page.drawImage(img, {
+                x: it.x*width,
+                y: (1-it.y-it.h)*height,
+                width: it.w*width,
+                height: it.h*height,
+              });
+            }
+          }catch(imgErr){ console.warn('Görsel eklenemedi:', imgErr); }
+        }
+      }
+      else if(it.type === 'link'){
+        // ===== GERÇEK TIKLANABİLİR LINK ANNOTATION =====
+        const linkAnnotation = pdfDoc.context.obj({
+          Type: 'Annot',
+          Subtype: 'Link',
+          Rect: [
+            it.x * width,
+            (1 - it.y - it.h) * height,
+            (it.x + it.w) * width,
+            (1 - it.y) * height,
+          ],
+          Border: [0, 0, 0],
+          C: [0.35, 0.40, 0.95],
+          A: {
+            Type: 'Action',
+            S: 'URI',
+            URI: PDFString.of(it.url),
+          },
+        });
+        const linkAnnotationRef = pdfDoc.context.register(linkAnnotation);
+
+        let existingAnnots = [];
+        const annotsObj = page.node.get(PDFName.of('Annots'));
+        if (annotsObj instanceof PDFArray) {
+          existingAnnots = annotsObj.asArray().slice();
+        } else if (annotsObj) {
+          existingAnnots.push(annotsObj);
+        }
+        existingAnnots.push(linkAnnotationRef);
+        page.node.set(PDFName.of('Annots'), pdfDoc.context.obj(existingAnnots));
+
+        page.drawRectangle({
+          x: it.x * width, y: (1 - it.y - it.h) * height,
+          width: it.w * width, height: it.h * height,
+          borderColor: rgb(0.35, 0.40, 0.95),
+          borderWidth: 1,
+          color: rgb(0.95, 0.96, 1),
+          opacity: 0.7,
+        });
+      }
+      else if(it.type === 'pagenum'){
+        const font = await getFont('Helvetica', false);
+        const c = hexToRgb01(it.color);
+        const fs = it.size;
+        const txt = it.text;
+        const tw = font.widthOfTextAtSize(txt, fs);
+        const margin = 30;
+        let x, y;
+        switch(it.pos){
+          case 'bottom-center': x = (width - tw)/2; y = margin; break;
+          case 'bottom-right':  x = width - margin - tw; y = margin; break;
+          case 'bottom-left':   x = margin; y = margin; break;
+          case 'top-center':    x = (width - tw)/2; y = height - margin - fs; break;
+          case 'top-right':     x = width - margin - tw; y = height - margin - fs; break;
+          case 'top-left':      x = margin; y = height - margin - fs; break;
+          default: x = (width - tw)/2; y = margin;
+        }
+        page.drawText(txt, { x, y, size: fs, font, color: rgb(c.r,c.g,c.b) });
+      }
+    }
+
+    for(const k of Object.keys(state.cropBoxes)){
+      const n = parseInt(k);
+      const page = pages[n-1];
+      if(!page) continue;
+      const { width, height } = page.getSize();
+      const c = state.cropBoxes[k];
+      const x = c.x * width;
+      const w = c.w * width;
+      const h = c.h * height;
+      const y = height - (c.y + c.h) * height;
+      page.setCropBox(x, y, w, h);
+    }
+
+    const out = await pdfDoc.save();
+    const blob = new Blob([out], { type:'application/pdf' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (state.fileName || 'belge') + '-duzenlendi.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    setStatus('Kaydedildi'); toast('PDF indirildi ✅');
+  }catch(err){
+    console.error(err);
+    setStatus('Hata'); toast('Kaydetme hatası: ' + err.message);
+  }
+  finally{ showLoading(false); }
+}
+
+/* ============ BAŞLANGIÇ ============ */
+(function init(){
+  const raw = localStorage.getItem(LS_KEY);
+  if(raw){
+    try{ const u = JSON.parse(raw); if(u && u.name){ bootApp(u.name); return; } }catch(e){}
+  }
+  goStep(1);
+})();
+</script>
+</body>
+</html>
